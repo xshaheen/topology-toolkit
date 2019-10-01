@@ -5,10 +5,8 @@ namespace Topology
 {
     public class Comparer
     {
-        public static Comparer<T> GetIEqualityComparer<T>(Func<T, T, bool> func)
-        {
-            return new Comparer<T>(func);
-        }
+        public static Comparer<T> GetIEqualityComparer<T>(Func<T, T, bool> func) 
+            => new Comparer<T>(func);
     }
 
     public class Comparer<T> : Comparer, IEqualityComparer<T>

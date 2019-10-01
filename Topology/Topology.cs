@@ -7,25 +7,35 @@ namespace Topology
 {
     public class Topology
     {
-        static void Main()
-        { 
-            
-        }
-
-
-        public static string PrintHashSet<T>(HashSet<T> set)
+        private static void Main()
         {
-            var sb = new StringBuilder("{");
+            var set = new HashSet<char>{'a', 'b', 'c'};
+            Console.WriteLine("Topologies on: " + SetToString(set));
+            Console.WriteLine("-----------------------------------");
+            var topologies = Topologies(set);
+            ///////////////////
+            Console.WriteLine("new HashSet<HashSet<HashSet<char>>>\n{");
+            foreach (var t in topologies)
+            {
+                Console.WriteLine("new HashSet<HashSet<char>>\n{");
+                foreach (var e in t)
+                {
+                    Console.Write("new HashSet<char>{");
+                    foreach (var c in e)
+                    {
+                        Console.Write($"'{c}',");
+                    }
 
-            foreach (var e in set) sb.Append(e + ", ");
+                    if (e.Count != 0) Console.Write("\b");
+                    Console.WriteLine("},");
+                }
+                if (t.Count != 0) Console.Write("\b");
+                Console.WriteLine("},");
+            }
 
-            var len = sb.Length;
-            // remove the extra ", "
-            if (len > 1) sb.Remove(len - 2, 2);
-
-            sb.Append("}");
-
-            return sb.ToString();
+            Console.WriteLine("};");
+            //////////////////
+            Console.ReadLine();
         }
 
         /// <summary>
@@ -68,10 +78,11 @@ namespace Topology
         ///   single-single-double-double 
         ///   001 010 011     101
         ///   001 010 011         110
-        ///       010 011 100     110
-        ///       010     100 101 110
         ///   001     011 100 101
         ///   001         100 101 110
+        ///       010 011 100     110
+        ///       010     100 101 110
+        ///   
         ///
         ///   Power set
         ///   001 010 011 100 101 110
@@ -88,33 +99,32 @@ namespace Topology
         /// <typeparam name="T">Set elements type.</typeparam>
         /// <param name="set">The set that a topologies dif</param>
         /// <returns>Set of all topologies that defined on <paramref name="set"/>.</returns>
-        public static HashSet<HashSet<HashSet<T>>> Topologies<T>(T[] set)
+        public static HashSet<HashSet<HashSet<T>>> Topologies<T>(HashSet<T> set)
         {
-            var setAsHashSet = set.ToHashSet();
+            var comparer = Comparer.GetIEqualityComparer(
+                (HashSet<char> x, HashSet<char> y) => y.SetEquals(x));
+
+            var setComparer = Comparer.GetIEqualityComparer(
+                (HashSet<HashSet<T>> x, HashSet<HashSet<T>> y) => y.SetEquals(x));
+
             var powerSet = PowerSet(set);
 
-            var topologies = new HashSet<HashSet<HashSet<T>>>{
-                powerSet, 
-                new HashSet<HashSet<T>> {new HashSet<T>(), setAsHashSet}
-            };
+            // add the trivial topology and the power set
+            var topologies = new HashSet<HashSet<HashSet<T>>>(setComparer);
+            // powerSet, 
+            // new HashSet<HashSet<T>> {new HashSet<T>(), set}
 
-            powerSet.Remove(new HashSet<T>());
-            powerSet.Remove(setAsHashSet);
-            var n = powerSet.Count;
 
-            // loop to get all 2^n subset.
-            for (var i = 0; i < (1 << n); i++)
+            var generatedSet = PowerSet(powerSet);
+
+            foreach (var t in generatedSet)
             {
-                var t = new HashSet<HashSet<T>> { new HashSet<T>(), setAsHashSet };
-
-                
-
-                if (IsTopology(t, setAsHashSet)) topologies.Add(t);
-
+                // t.Add(new HashSet<T>());
+                // t.Add(set);
+                if (IsTopology(t, set)) topologies.Add(t);
             }
 
-
-            return null;
+            return topologies;
         }
 
 
@@ -133,24 +143,20 @@ namespace Topology
         public static bool IsTopology<T>(HashSet<HashSet<T>> t, HashSet<T> set)
         {
             var setComparer = Comparer.GetIEqualityComparer((IEnumerable<T> x, IEnumerable<T> y)
-                => ((HashSet<T>)x).SetEquals(y));
+                => ((HashSet<T>) x).SetEquals(y));
 
             if (!t.Contains(set, setComparer) ||
                 !t.Contains(new HashSet<T>(), setComparer)) return false;
 
             // Todo: find a better data structure that support indexer can improve performance a little bit.
-            foreach (var e1 in t)
-            {
-                foreach (var e2 in t)
-                {
-                    var union = e1.Union(e2);
-                    var intersection = e1.Intersect(e2);
-                    if (!t.Contains(union, setComparer) || !t.Contains(intersection, setComparer))
-                        return false;
-                }
-            }
-
-            return true;
+            return !(
+                from e1 in t 
+                from e2 in t
+                let union = e1.Union(e2)
+                let intersection = e1.Intersect(e2)
+                where !t.Contains(union, setComparer) 
+                      || !t.Contains(intersection, setComparer)
+                select union).Any();
         }
 
 
@@ -167,22 +173,29 @@ namespace Topology
         /// <typeparam name="T">The type of set elements.</typeparam>
         /// <param name="set">The target set.</param>
         /// <returns>The power set of the set.</returns>
-        public static HashSet<HashSet<T>> PowerSet<T>(T[] set)
+        public static HashSet<HashSet<T>> PowerSet<T>(HashSet<T> set)
         {
-            var n = set.Length;
-            var powerSet = new HashSet<HashSet<T>>();
-            
+            var elementComparer = Comparer.GetIEqualityComparer(
+                (T x, T y) => y.Equals(x));
+
+            var comparer = Comparer.GetIEqualityComparer(
+                (HashSet<T> x, HashSet<T> y) => y.SetEquals(x));
+
+            var powerSet = new HashSet<HashSet<T>>(comparer);
+
             // Fact: The number of subsets of a set contains n elements is 2^n.
             // loop to get all 2^n subset
-            for (var i = 0; i < (1 << n); i++)
+            for (var i = 0; i < (1 << set.Count); i++)
             {
-                var subset = new HashSet<T>();
+                var subset = new HashSet<T>(elementComparer);
 
                 // loop though every element in the set and determine with number 
                 // should present in the current subset.
-                for (var j = 0; j < n; j++)
+
+                var j = 0;
+                foreach (var e in set)
                     // if the jth element (bit) in the ith subset (binary number of i) add it.
-                    if (((1 << j) & i) > 0) subset.Add(set[j]);
+                    if (((1 << j++) & i) > 0) subset.Add(e);
 
                 powerSet.Add(subset);
             }
@@ -190,6 +203,61 @@ namespace Topology
             return powerSet;
         }
 
-    }
+        /// <summary>
+        /// Converts the set to printable string.
+        /// </summary>
+        /// <typeparam name="T">Type of set elements.</typeparam>
+        /// <param name="set">The set to convert to string</param>
+        /// <returns>Printable string represent the set.</returns>
+        public static string SetToString<T>(HashSet<HashSet<HashSet<T>>> set)
+        {
+            var sb = new StringBuilder();
+            var counter = 1;
 
+            foreach (var e in set) sb.Append($"{counter++,4}. " + SetToString(e) + "\n");
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Converts the set to printable string.
+        /// </summary>
+        /// <typeparam name="T">Type of set elements.</typeparam>
+        /// <param name="set">The set to convert to string</param>
+        /// <returns>Printable string represent the set.</returns>
+        public static string SetToString<T>(HashSet<HashSet<T>> set)
+        {
+            var sb = new StringBuilder("{ ");
+
+            foreach (var e in set) sb.Append(SetToString(e) + ", ");
+
+            // remove the extra ", "
+            var len = sb.Length;
+            if (len > 1) sb.Remove(len - 2, 2);
+            sb.Append(" }");
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Converts the set to printable string.
+        /// </summary>
+        /// <typeparam name="T">Type of set elements.</typeparam>
+        /// <param name="set">The set to convert to string</param>
+        /// <returns>Printable string represent the set.</returns>
+        public static string SetToString<T>(HashSet<T> set)
+        {
+            var sb = new StringBuilder("{");
+
+            foreach (var e in set) sb.Append(e + ", ");
+
+            var len = sb.Length;
+            // remove the extra ", "
+            if (len > 1) sb.Remove(len - 2, 2);
+
+            sb.Append("}");
+
+            return sb.ToString();
+        }
+    }
 }
