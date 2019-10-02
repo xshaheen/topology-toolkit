@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 using Xunit.Abstractions;
@@ -88,7 +87,7 @@ namespace Topology.Test
             Assert.Equal(expected, result,
                 Comparer.GetIEqualityComparer((HashSet<char> x, HashSet<char> y)
                     => x.SetEquals(y)));
-            Assert.Equal(8, result.Count);
+            Assert.Equal(16, result.Count);
 
         }
 
@@ -339,7 +338,7 @@ namespace Topology.Test
             // Act
             var result = Topology.Topologies(set);
             
-            // _testOutputHelper.WriteLine(Topology.SetToString(result.Except(expected, setComparer).ToHashSet()));
+            _testOutputHelper.WriteLine(Topology.SetToString(result.Except(expected, setComparer).ToHashSet()));
 
             // Assert - the two sets is equals
             Assert.Equal(expected, result, setComparer);

@@ -12,34 +12,13 @@ namespace Topology
             var set = new HashSet<char>{'a', 'b', 'c'};
             Console.WriteLine("Topologies on: " + SetToString(set));
             Console.WriteLine("-----------------------------------");
-            var topologies = Topologies(set);
-            ///////////////////
-            Console.WriteLine("new HashSet<HashSet<HashSet<char>>>\n{");
-            foreach (var t in topologies)
-            {
-                Console.WriteLine("new HashSet<HashSet<char>>\n{");
-                foreach (var e in t)
-                {
-                    Console.Write("new HashSet<char>{");
-                    foreach (var c in e)
-                    {
-                        Console.Write($"'{c}',");
-                    }
-
-                    if (e.Count != 0) Console.Write("\b");
-                    Console.WriteLine("},");
-                }
-                if (t.Count != 0) Console.Write("\b");
-                Console.WriteLine("},");
-            }
-
-            Console.WriteLine("};");
+            Console.WriteLine(SetToString(Topologies(set)));
             //////////////////
             Console.ReadLine();
         }
 
         /// <summary>
-        /// Generates a all topology defined on a given set.
+        /// Generates a all topology defined on a given set In O(2^(2^set.Count -2)).
         /// </summary>
         /// Example:
         /// - Input: S = {'c', 'b', 'a'} // See unit test.
@@ -101,26 +80,22 @@ namespace Topology
         /// <returns>Set of all topologies that defined on <paramref name="set"/>.</returns>
         public static HashSet<HashSet<HashSet<T>>> Topologies<T>(HashSet<T> set)
         {
-            var comparer = Comparer.GetIEqualityComparer(
-                (HashSet<char> x, HashSet<char> y) => y.SetEquals(x));
+            HashSet<HashSet<T>> powerSet = PowerSet(set);
 
-            var setComparer = Comparer.GetIEqualityComparer(
-                (HashSet<HashSet<T>> x, HashSet<HashSet<T>> y) => y.SetEquals(x));
+            // remove the set and the empty set. for example, for set of 4 element this
+            // make the complexity decrease from 2^(2^4)= 65,536 to 2^(2^4-2)= 16,384
+            powerSet.RemoveWhere(s => s.Count == 0); // O(2^set.Count)
+            powerSet.RemoveWhere(s => s.Count == set.Count); // O(2 ^ set.Count)
 
-            var powerSet = PowerSet(set);
+            var powerSetOfPowerSet = PowerSet(powerSet); // O(2^(2^set.Count -2))
 
             // add the trivial topology and the power set
-            var topologies = new HashSet<HashSet<HashSet<T>>>(setComparer);
-            // powerSet, 
-            // new HashSet<HashSet<T>> {new HashSet<T>(), set}
+            var topologies = new HashSet<HashSet<HashSet<T>>>();
 
-
-            var generatedSet = PowerSet(powerSet);
-
-            foreach (var t in generatedSet)
+            foreach (var t in powerSetOfPowerSet) // O(2^(2^set.Count -2))
             {
-                // t.Add(new HashSet<T>());
-                // t.Add(set);
+                t.Add(new HashSet<T>()); // O(1)
+                t.Add(set); // O(1)
                 if (IsTopology(t, set)) topologies.Add(t);
             }
 
@@ -129,7 +104,7 @@ namespace Topology
 
 
         /// <summary>
-        /// Determine if the <paramref name="t"/> is a topology of the <paramref name="set"/>.
+        /// Determine if the <paramref name="t"/> is a topology of the <paramref name="set"/> in O(t.Count^2).
         /// </summary>
         /// Topology Definition:
         /// let X be a set and let τ be a family of subsets of X. Then τ is called a topology on X if:
@@ -142,23 +117,23 @@ namespace Topology
         /// <returns>Returns true if the <paramref name="t"/> if topology on the <paramref name="set"/>, otherwise return false.</returns>
         public static bool IsTopology<T>(HashSet<HashSet<T>> t, HashSet<T> set)
         {
-            var setComparer = Comparer.GetIEqualityComparer((IEnumerable<T> x, IEnumerable<T> y)
+            var comparer = Comparer.GetIEqualityComparer((IEnumerable<T> x, IEnumerable<T> y)
                 => ((HashSet<T>) x).SetEquals(y));
 
-            if (!t.Contains(set, setComparer) ||
-                !t.Contains(new HashSet<T>(), setComparer)) return false;
+            if (!t.Contains(set, comparer) || !t.Contains(new HashSet<T>(), comparer)) 
+                return false;
 
-            // Todo: find a better data structure that support indexer can improve performance a little bit.
-            return !(
-                from e1 in t 
-                from e2 in t
-                let union = e1.Union(e2)
-                let intersection = e1.Intersect(e2)
-                where !t.Contains(union, setComparer) 
-                      || !t.Contains(intersection, setComparer)
-                select union).Any();
+            foreach (var e1 in t)
+            foreach (var e2 in t)
+            {
+                var union = e1.Union(e2);
+                var intersection = e1.Intersect(e2);
+                if (!t.Contains(union, comparer) || !t.Contains(intersection, comparer))
+                    return false;
+            }
+
+            return true;
         }
-
 
         /// <summary>
         /// Generates the power set of the given set in O(2^set.length).
@@ -175,23 +150,17 @@ namespace Topology
         /// <returns>The power set of the set.</returns>
         public static HashSet<HashSet<T>> PowerSet<T>(HashSet<T> set)
         {
-            var elementComparer = Comparer.GetIEqualityComparer(
-                (T x, T y) => y.Equals(x));
-
-            var comparer = Comparer.GetIEqualityComparer(
-                (HashSet<T> x, HashSet<T> y) => y.SetEquals(x));
-
-            var powerSet = new HashSet<HashSet<T>>(comparer);
+            var powerSet = new HashSet<HashSet<T>>(1 << set.Count);
 
             // Fact: The number of subsets of a set contains n elements is 2^n.
+
             // loop to get all 2^n subset
             for (var i = 0; i < (1 << set.Count); i++)
             {
-                var subset = new HashSet<T>(elementComparer);
+                var subset = new HashSet<T>();
 
                 // loop though every element in the set and determine with number 
                 // should present in the current subset.
-
                 var j = 0;
                 foreach (var e in set)
                     // if the jth element (bit) in the ith subset (binary number of i) add it.
