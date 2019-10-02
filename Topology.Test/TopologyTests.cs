@@ -88,7 +88,6 @@ namespace Topology.Test
                 Comparer.GetIEqualityComparer((HashSet<char> x, HashSet<char> y)
                     => x.SetEquals(y)));
             Assert.Equal(16, result.Count);
-
         }
 
         [Fact]
@@ -96,21 +95,21 @@ namespace Topology.Test
         {
             // Arrange
             var set = new HashSet<char> {'a', 'b', 'c'};
-            
+
             var setComparer = Comparer.GetIEqualityComparer(
                 (HashSet<HashSet<char>> x, HashSet<HashSet<char>> y) =>
                 {
                     if (x.Count != y.Count) return false;
-                    
+
                     var exist = false;
-                    
+
                     foreach (var s in x)
                     {
                         exist = y.Contains(s, Comparer.GetIEqualityComparer(
                             (HashSet<char> a, HashSet<char> b) => a.SetEquals(b)));
                         if (!exist) break;
                     }
-                    
+
                     return exist;
                 });
 
@@ -337,7 +336,7 @@ namespace Topology.Test
 
             // Act
             var result = Topology.Topologies(set);
-            
+
             _testOutputHelper.WriteLine(Topology.SetToString(result.Except(expected, setComparer).ToHashSet()));
 
             // Assert - the two sets is equals
