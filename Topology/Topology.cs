@@ -9,12 +9,38 @@ namespace Topology
     {
         private static void Main()
         {
-            var set = new HashSet<char>{'a', 'b', 'c'};
+            var set = new HashSet<char> {'a', 'b', 'c'};
             Console.WriteLine("Topologies on: " + SetToString(set));
             Console.WriteLine("-----------------------------------");
-            Console.WriteLine(SetToString(Topologies(set)));
+            TopologiesSet(set);
             //////////////////
             Console.ReadLine();
+        }
+
+        public static HashSet<HashSet<HashSet<T>>> Topologies<T>(HashSet<T> set)
+        {
+            HashSet<HashSet<T>> powerSet = PowerSet(set);
+
+            // remove the set and the empty set. for example, for set of 4 element this
+            // make the complexity decrease from 2^(2^4)= 65,536 to 2^(2^4-2)= 16,384
+            powerSet.RemoveWhere(s => s.Count == 0);         // O(2^set.Count)
+            powerSet.RemoveWhere(s => s.Count == set.Count); // O(2 ^ set.Count)
+
+            /////////////////////////////////////////////////////////////////////
+            // Problem here you will loop again on the set can make it one.
+            var powerSetOfPowerSet = PowerSet(powerSet); // O(2^(2^set.Count -2)) 
+
+            var topologies = new HashSet<HashSet<HashSet<T>>>();
+
+            foreach (var t in powerSetOfPowerSet) // O(2^(2^set.Count -2))
+            {
+                t.Add(new HashSet<T>()); // O(1)
+                t.Add(set);              // O(1)
+                if (IsTopology(t, set)) topologies.Add(t);
+            }
+
+            /////////////////////////////////////////////////////////////////////
+            return topologies;
         }
 
         /// <summary>
@@ -78,30 +104,42 @@ namespace Topology
         /// <typeparam name="T">Set elements type.</typeparam>
         /// <param name="set">The set that a topologies dif</param>
         /// <returns>Set of all topologies that defined on <paramref name="set"/>.</returns>
-        public static HashSet<HashSet<HashSet<T>>> Topologies<T>(HashSet<T> set)
+        public static HashSet<HashSet<HashSet<T>>> TopologiesSet<T>(HashSet<T> set)
         {
-            HashSet<HashSet<T>> powerSet = PowerSet(set);
+            var powerSet = PowerSet(set);
 
             // remove the set and the empty set. for example, for set of 4 element this
             // make the complexity decrease from 2^(2^4)= 65,536 to 2^(2^4-2)= 16,384
-            powerSet.RemoveWhere(s => s.Count == 0); // O(2^set.Count)
+            powerSet.RemoveWhere(s => s.Count == 0);         // O(2^set.Count)
             powerSet.RemoveWhere(s => s.Count == set.Count); // O(2 ^ set.Count)
 
-            var powerSetOfPowerSet = PowerSet(powerSet); // O(2^(2^set.Count -2))
-
-            // add the trivial topology and the power set
             var topologies = new HashSet<HashSet<HashSet<T>>>();
 
-            foreach (var t in powerSetOfPowerSet) // O(2^(2^set.Count -2))
+            // loop to get all 2^n subset
+            var n = (long) Math.Pow(2, powerSet.Count);
+            for (long i = 0; i < n; i++)
             {
-                t.Add(new HashSet<T>()); // O(1)
-                t.Add(set); // O(1)
-                if (IsTopology(t, set)) topologies.Add(t);
+                var subset = new HashSet<HashSet<T>>();
+
+                // loop though every element in the set and determine with number 
+                // should present in the current subset.
+                var j = 0;
+                foreach (var e in powerSet)
+                    // if the jth element (bit) in the ith subset (binary number of i) add it.
+                    if (((1L << j++) & i) > 0)
+                        subset.Add(e);
+
+                subset.Add(new HashSet<T>()); // O(1)
+                subset.Add(set);              // O(1)
+                if (IsTopology(subset, set))
+                {
+                    Console.WriteLine(SetToString(subset));
+                    topologies.Add(subset);
+                }
             }
 
             return topologies;
         }
-
 
         /// <summary>
         /// Determine if the <paramref name="t"/> is a topology of the <paramref name="set"/> in O(t.Count^2).
@@ -120,7 +158,7 @@ namespace Topology
             var comparer = Comparer.GetIEqualityComparer((IEnumerable<T> x, IEnumerable<T> y)
                 => ((HashSet<T>) x).SetEquals(y));
 
-            if (!t.Contains(set, comparer) || !t.Contains(new HashSet<T>(), comparer)) 
+            if (!t.Contains(set, comparer) || !t.Contains(new HashSet<T>(), comparer))
                 return false;
 
             foreach (var e1 in t)
@@ -152,8 +190,6 @@ namespace Topology
         {
             var powerSet = new HashSet<HashSet<T>>(1 << set.Count);
 
-            // Fact: The number of subsets of a set contains n elements is 2^n.
-
             // loop to get all 2^n subset
             for (var i = 0; i < (1 << set.Count); i++)
             {
@@ -164,7 +200,8 @@ namespace Topology
                 var j = 0;
                 foreach (var e in set)
                     // if the jth element (bit) in the ith subset (binary number of i) add it.
-                    if (((1 << j++) & i) > 0) subset.Add(e);
+                    if (((1L << j++) & i) > 0)
+                        subset.Add(e);
 
                 powerSet.Add(subset);
             }
