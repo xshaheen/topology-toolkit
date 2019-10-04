@@ -19,7 +19,7 @@ namespace Topology
         }
 
         /// <summary>
-        /// Generates all topology defined on a given set In O(2^(2^set.Count -2)).
+        /// Generates all topologies defined on a given set In O(2^(2^set.Count -2)).
         /// </summary>
         /// Example:
         /// - Input: S = {'c', 'b', 'a'} // See unit test.
@@ -91,8 +91,8 @@ namespace Topology
             var len = powerSet.Count;
             var topologies = new HashSet<HashSet<HashSet<T>>>(len);
 
-            // loop to get all 2^n subset
             var n = 1L << len;
+            // loop to get all n subsets
             for (long i = 0; i < n; i++)
             {
                 var subset = new HashSet<HashSet<T>>();
@@ -126,8 +126,9 @@ namespace Topology
             powerSet.RemoveWhere(s => s.Count == 0);
             powerSet.RemoveWhere(s => s.Count == set.Count);
 
-            // loop to get all 2^n subset
             var n = 1L << powerSet.Count;
+            var start = DateTime.Now;
+            // loop to get all n subsets
             for (long i = 0; i < n; i++)
             {
                 var subset = new HashSet<HashSet<T>>();
@@ -137,13 +138,13 @@ namespace Topology
                 var j = 0;
                 foreach (var e in powerSet)
                     // if the jth element (bit) in the ith subset (binary number of i) add it.
-                    if (((1L << j++) & i) > 0)
-                        subset.Add(e);
+                    if (((1L << j++) & i) > 0) subset.Add(e);
 
                 subset.Add(new HashSet<T>());
                 subset.Add(set);
                 if (IsTopology(subset, set))
-                    Console.WriteLine($"{counter++,4}. " + SetToString(subset));
+                    Console.WriteLine($"{counter++,4}. " + SetToString(subset) + 
+                                      $" | {DateTime.Now - start} | {n}");
             }
         }
 
@@ -194,10 +195,11 @@ namespace Topology
         /// <returns>The power set of the set.</returns>
         public static HashSet<HashSet<T>> PowerSet<T>(HashSet<T> set)
         {
-            var powerSet = new HashSet<HashSet<T>>(1 << set.Count);
+            var n = 1 << set.Count;
+            var powerSet = new HashSet<HashSet<T>>(n);
 
-            // loop to get all 2^n subset
-            for (var i = 0; i < (1 << set.Count); i++)
+            // loop to get all 2^set.Count subset
+            for (var i = 0; i < n; i++)
             {
                 var subset = new HashSet<T>();
 
