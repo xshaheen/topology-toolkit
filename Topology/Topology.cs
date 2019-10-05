@@ -13,7 +13,7 @@ namespace Topology
             Console.WriteLine("Topologies on: " + SetToString(set));
             Console.WriteLine("-----------------------------------");
             PrintTopologies(set);
-            
+
             //////////////////
             Console.ReadLine();
         }
@@ -102,8 +102,7 @@ namespace Topology
                 var j = 0;
                 foreach (var e in powerSet)
                     // if the jth element (bit) in the ith subset (binary number of i) add it.
-                    if (((1L << j++) & i) > 0)
-                        subset.Add(e);
+                    if (((1L << j++) & i) > 0) subset.Add(e);
 
                 subset.Add(new HashSet<T>());
                 subset.Add(set);
@@ -143,8 +142,8 @@ namespace Topology
                 subset.Add(new HashSet<T>());
                 subset.Add(set);
                 if (IsTopology(subset, set))
-                    Console.WriteLine($"{counter++,4}. " + SetToString(subset) + 
-                                      $" | {DateTime.Now - start} | {n}");
+                    Console.WriteLine($"{counter++,4}. " + SetToString(subset) +
+                                      $" | {DateTime.Now - start} | {i}");
             }
         }
 
