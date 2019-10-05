@@ -9,11 +9,26 @@ namespace Topology
     {
         private static void Main()
         {
-            var set = new HashSet<char> { 'a', 'b', 'c', 'd' };
+            string[] elements;
+            while (true)
+            {
+                Console.WriteLine("Enter the set elements like \"a,b,c\" (without the double quotes):");
+                var input = Console.ReadLine();
+                if (input == null) continue;
+                
+                elements = input.Split(",");
+                if (elements.Length > 1) break;
+            }
+
+            var set = new HashSet<string>();
+            foreach (var element in elements) set.Add(element.Trim());
+
+            Console.WriteLine("-----------------------------------");
             Console.WriteLine("Topologies on: " + SetToString(set));
             Console.WriteLine("-----------------------------------");
-            PrintTopologies(set);
-
+            var total = PrintTopologies(set);
+            Console.WriteLine("-----------------------------------");
+            Console.WriteLine($"Total number of topologies that defined on the set: {total}");
             //////////////////
             Console.ReadLine();
         }
@@ -117,9 +132,9 @@ namespace Topology
         /// </summary>
         /// <typeparam name="T">Type of set elements.</typeparam>
         /// <param name="set">The set.</param>
-        public static void PrintTopologies<T>(HashSet<T> set)
+        public static int PrintTopologies<T>(HashSet<T> set)
         {
-            var counter = 1;
+            var counter = 0;
             var powerSet = PowerSet(set);
 
             powerSet.RemoveWhere(s => s.Count == 0);
@@ -142,9 +157,11 @@ namespace Topology
                 subset.Add(new HashSet<T>());
                 subset.Add(set);
                 if (IsTopology(subset, set))
-                    Console.WriteLine($"{counter++,4}. " + SetToString(subset) +
+                    Console.WriteLine($"{++counter,4}. " + SetToString(subset) +
                                       $" | {DateTime.Now - start} | {i}");
             }
+
+            return counter;
         }
 
         /// <summary>
