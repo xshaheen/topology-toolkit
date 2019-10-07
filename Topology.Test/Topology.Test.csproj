@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Topology\Topology.csproj" />
+    <ProjectReference Include="..\Topology.Infra\Topology.Infra.csproj" />
   </ItemGroup>
 
 </Project>

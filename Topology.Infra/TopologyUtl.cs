@@ -3,34 +3,124 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Topology
+namespace Topology.Infra
 {
-    public class Topology
+    /// <summary>
+    /// Provides a set of static methods that related to topology.
+    /// </summary>
+    public class TopologyUtl
     {
-        private static void Main()
+        /// <summary>
+        /// Find boundary points (aka frontier points) of a <paramref name="subset"/>.
+        /// </summary>
+        /// Theorems: If A is a subset of a topological space X, then boundary(A)= closure(A) − int(T)
+        /// <typeparam name="T">Type of <paramref name="set"/> elements.</typeparam>
+        public static HashSet<T> BoundaryPoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t)
         {
-            string[] elements;
-            while (true)
+            var closurePoints = ClosurePoints(set, subset, t);
+            closurePoints.ExceptWith(InteriorPoints(set, subset, t));
+            return closurePoints;
+        }
+
+        /// <summary>
+        /// Find exterior points of a <paramref name="subset"/>.
+        /// </summary>
+        /// Definition:
+        ///   Let (X,τ) be a topological space and A ⊆ X, then a point p ∈ X,
+        ///   is said to be an exterior point of A if there exists an open set O,
+        ///   such that p ∈ O ∈ clo(A)
+        /// Exterior of a Set: A - clo(A)
+        /// <typeparam name="T">Type of <paramref name="set"/> elements.</typeparam>
+        public static HashSet<T> ExteriorPoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t) 
+            => set.Except(ClosurePoints(set, subset, t)).ToHashSet();
+
+        /// <summary>
+        /// Finds interior points of a <paramref name="subset"/>.
+        /// </summary>
+        /// Definition:
+        /// * Let (X,t) be the topological space and A ⊆ X, then a point p∈A is said
+        ///   to be an interior point of set A, if there exists an open set O such that p ∈ O ⊆ A
+        /// * Interior of a set: is defined to be the union of all open sets contained in A.
+        /// <typeparam name="T">Type of <paramref name="set"/> elements.</typeparam>
+        public static HashSet<T> InteriorPoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t)
+        {
+            var interiors = new HashSet<T>();
+
+            foreach (var g in t.Where(e => e.IsSubsetOf(subset)))
+                interiors.UnionWith(g);
+
+            return interiors;
+        }
+
+        /// <summary>
+        /// Find closure points of a <paramref name="subset"/>.
+        /// </summary>
+        /// Definition:
+        ///   Let (X,τ) be a topological space and A ⊆ X, then the closure of A
+        ///   is the intersection of all closed sets containing A
+        ///   i.e. the smallest closed set containing A.
+        /// Example
+        ///   Let X={a,b,c,d} with topology τ={{},{a},{b,c},{a,b,c},X} and A={b,d}.
+        ///   - Open sets are   {},  {a}  {b,c},{a,b,c},X
+        ///   - Closed sets are X,{b,c,d},{a,d},{d}    ,{}
+        ///   - Closed sets containing A are X,{b,c,d}
+        ///   - Now closure(A) = {b,c,d} ∩ X = {b,c,d}
+        /// <typeparam name="T">Type of <paramref name="set"/> elements.</typeparam>
+        public static HashSet<T> ClosurePoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t)
+        {
+            // Generate all closed set for every element in t
+            var allClosedSets = new HashSet<HashSet<T>>(t.Count);
+            foreach (var e in t) allClosedSets.Add(ClosedSet(set, e));
+
+            // Get the closed set that containing the subset.
+            var closedSets = allClosedSets.Where(subset.IsSubsetOf).ToArray();
+
+            var closurePoints = closedSets.First();
+
+            for (var i = 1; i < closedSets.Length; i++)
+                closurePoints.IntersectWith(closedSets[i]);
+
+            return closurePoints;
+        }
+
+        /// <summary>
+        /// Finds limit points (aka accumulation points or cluster points) of a <paramref name="subset"/>.
+        /// </summary>
+        /// Definition: Let A be a subset of a topological space (X, t). A point p ∈ X is said to
+        /// be a limit point (or accumulation point or cluster point) of A if every open set G
+        /// containing p contains a point of A different from p.
+        /// Mathematical form: { p ∈ X: ∀G ∈ t, p ∈ G, A∩(G - p) != {} }
+        /// <typeparam name="T">Set elements type.</typeparam>
+        public static HashSet<T> LimitPoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t)
+        {
+            var comparer = Comparer.GetIEqualityComparer((IEnumerable<T> x, IEnumerable<T> y)
+                => x.SequenceEqual(y));
+
+            var limitPoints = new HashSet<T>();
+
+            foreach (var point in set)
             {
-                Console.WriteLine("Enter the set elements like \"a,b,c\" (without the double quotes):");
-                var input = Console.ReadLine();
-                if (input == null) continue;
-                
-                elements = input.Split(",");
-                if (elements.Length > 1) break;
+                var isLimit = true;
+                foreach (var e in t.Where(g => g.Contains(point)))
+                {
+                    var except = e.Except(new[] {point}).ToArray();
+
+                    if (!except.Any())
+                    {
+                        isLimit = false;
+                        break;
+                    }
+
+                    if (subset.Intersect(except).Any()) continue;
+
+                    isLimit = false;
+                    break;
+                }
+
+                if (isLimit) limitPoints.Add(point);
             }
 
-            var set = new HashSet<string>();
-            foreach (var element in elements) set.Add(element.Trim());
-
-            Console.WriteLine("-----------------------------------");
-            Console.WriteLine("Topologies on: " + SetToString(set));
-            Console.WriteLine("-----------------------------------");
-            var total = PrintTopologies(set);
-            Console.WriteLine("-----------------------------------");
-            Console.WriteLine($"Total number of topologies that defined on the set: {total}");
-            //////////////////
-            Console.ReadLine();
+            return limitPoints;
         }
 
         /// <summary>
@@ -94,7 +184,7 @@ namespace Topology
         /// <typeparam name="T">Set elements type.</typeparam>
         /// <param name="set">The set that a topologies dif</param>
         /// <returns>Set of all topologies that defined on <paramref name="set"/>.</returns>
-        public static HashSet<HashSet<HashSet<T>>> Topologies<T>(HashSet<T> set)
+        public static IEnumerable<HashSet<HashSet<T>>> Topologies<T>(HashSet<T> set)
         {
             var powerSet = PowerSet(set);
 
@@ -103,45 +193,7 @@ namespace Topology
             powerSet.RemoveWhere(s => s.Count == 0);         // O(2^set.Count)
             powerSet.RemoveWhere(s => s.Count == set.Count); // O(2^set.Count)
 
-            var len = powerSet.Count;
-            var topologies = new HashSet<HashSet<HashSet<T>>>(len);
-
-            var n = 1L << len;
-            // loop to get all n subsets
-            for (long i = 0; i < n; i++)
-            {
-                var subset = new HashSet<HashSet<T>>();
-
-                // loop though every element in the set and determine with number 
-                // should present in the current subset.
-                var j = 0;
-                foreach (var e in powerSet)
-                    // if the jth element (bit) in the ith subset (binary number of i) add it.
-                    if (((1L << j++) & i) > 0) subset.Add(e);
-
-                subset.Add(new HashSet<T>());
-                subset.Add(set);
-                if (IsTopology(subset, set)) topologies.Add(subset);
-            }
-
-            return topologies;
-        }
-
-        /// <summary>
-        /// Have the same functionally as Topologies function but it prints to console directly.
-        /// </summary>
-        /// <typeparam name="T">Type of set elements.</typeparam>
-        /// <param name="set">The set.</param>
-        public static int PrintTopologies<T>(HashSet<T> set)
-        {
-            var counter = 0;
-            var powerSet = PowerSet(set);
-
-            powerSet.RemoveWhere(s => s.Count == 0);
-            powerSet.RemoveWhere(s => s.Count == set.Count);
-
             var n = 1L << powerSet.Count;
-            var start = DateTime.Now;
             // loop to get all n subsets
             for (long i = 0; i < n; i++)
             {
@@ -152,16 +204,13 @@ namespace Topology
                 var j = 0;
                 foreach (var e in powerSet)
                     // if the jth element (bit) in the ith subset (binary number of i) add it.
-                    if (((1L << j++) & i) > 0) subset.Add(e);
+                    if (((1L << j++) & i) > 0)
+                        subset.Add(e);
 
                 subset.Add(new HashSet<T>());
                 subset.Add(set);
-                if (IsTopology(subset, set))
-                    Console.WriteLine($"{++counter,4}. " + SetToString(subset) +
-                                      $" | {DateTime.Now - start} | {i}");
+                if (IsTopology(subset, set)) yield return subset;
             }
-
-            return counter;
         }
 
         /// <summary>
@@ -179,19 +228,19 @@ namespace Topology
         public static bool IsTopology<T>(HashSet<HashSet<T>> t, HashSet<T> set)
         {
             var comparer = Comparer.GetIEqualityComparer((IEnumerable<T> x, IEnumerable<T> y)
-                => ((HashSet<T>)x).SetEquals(y));
+                => ((HashSet<T>) x).SetEquals(y));
 
             if (!t.Contains(set, comparer) || !t.Contains(new HashSet<T>(), comparer))
                 return false;
 
             foreach (var e1 in t)
-                foreach (var e2 in t)
-                {
-                    var union = e1.Union(e2);
-                    var intersection = e1.Intersect(e2);
-                    if (!t.Contains(union, comparer) || !t.Contains(intersection, comparer))
-                        return false;
-                }
+            foreach (var e2 in t)
+            {
+                var union = e1.Union(e2);
+                var intersection = e1.Intersect(e2);
+                if (!t.Contains(union, comparer) || !t.Contains(intersection, comparer))
+                    return false;
+            }
 
             return true;
         }
@@ -234,6 +283,18 @@ namespace Topology
         }
 
         /// <summary>
+        /// Find the closure of a <paramref name="subset"/>.
+        /// </summary>
+        /// <typeparam name="T">Type of <paramref name="set"/> elements.</typeparam>
+        public static HashSet<T> ClosedSet<T>(HashSet<T> set, HashSet<T> subset)
+        {
+            if (subset.Count > set.Count)
+                throw new Exception("The subset is bigger than the set!");
+
+            return set.Where(e => !subset.Contains(e)).ToHashSet();
+        }
+
+        /// <summary>
         /// Converts the set to printable string.
         /// </summary>
         /// <typeparam name="T">Type of set elements.</typeparam>
@@ -244,7 +305,7 @@ namespace Topology
             var sb = new StringBuilder();
             var counter = 1;
 
-            foreach (var e in set) sb.Append($"{counter++,4}. " + SetToString(e) + "\n");
+            foreach (var e in set) sb.Append($"{counter++,4}. {SetToString(e)}\n");
 
             return sb.ToString();
         }

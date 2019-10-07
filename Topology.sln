@@ -3,9 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29324.140
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topology", "Topology\Topology.csproj", "{FCDE38F5-1EFA-4D17-8918-B82583A7B677}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topology.CLI", "Topology.CLI\Topology.CLI.csproj", "{FCDE38F5-1EFA-4D17-8918-B82583A7B677}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topology.Test", "Topology.Test\Topology.Test.csproj", "{A0EAD465-138F-487A-896E-2EBFBC25912B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
