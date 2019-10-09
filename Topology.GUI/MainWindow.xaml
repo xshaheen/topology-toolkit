@@ -159,7 +159,7 @@
                         FontSize="14"
                         FontWeight="Bold"
                         Foreground="#FFA2A2A2"
-                        Text="Topology" />
+                        Text="Topologies" />
                 </TabItem.Header>
 
                 <Grid Margin="30,10,30,10" IsSharedSizeScope="True">
@@ -213,15 +213,15 @@
                         CanUserResizeColumns="True"
                         FontSize="14"
                         GridLinesVisibility="None"
+                        HorizontalScrollBarVisibility="Auto"
                         IsReadOnly="True"
                         ItemsSource="{Binding}"
                         MinRowHeight="30"
-                        ScrollViewer.CanContentScroll="True"
-                        ToolTip="Topologies.">
+                        ToolTip="Topologies."
+                        VerticalScrollBarVisibility="Auto">
                         <DataGrid.Columns>
                             <DataGridTextColumn
                                 x:Name="IndexColumn"
-                                Width="Auto"
                                 MinWidth="40"
                                 Binding="{Binding Path=Index}"
                                 Header="N" />
@@ -267,15 +267,7 @@
                                 Click="GenerateToExcelBtn_Click"
                                 Content="Generate To Excel"
                                 ToolTip="Generate or Export the topologies to Excel file." />
-
                         </StackPanel>
-                        <ProgressBar
-                            Grid.Column="1"
-                            Width="210"
-                            Height="20"
-                            Margin="15,0,0,0"
-                            HorizontalAlignment="Left"
-                            VerticalAlignment="Center" />
                     </Grid>
                 </Grid>
 
@@ -300,6 +292,7 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="0" Margin="0,20,0,15">
@@ -410,13 +403,13 @@
                     </Grid>
                     <Grid Grid.Row="2">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
                         <Grid Grid.Column="0">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="PointsLabel" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Label
@@ -427,7 +420,8 @@
                                 FontWeight="Medium" />
                             <Border
                                 Grid.Column="1"
-                                Margin="10,10,10,10"
+                                MinWidth="200"
+                                Margin="0,10,10,10"
                                 Background="WhiteSmoke"
                                 BorderBrush="Gray"
                                 ToolTip="Result">
@@ -438,7 +432,6 @@
                                     FontSize="14" />
                             </Border>
                         </Grid>
-
                         <StackPanel
                             Grid.Column="1"
                             Margin="0,5,0,5"
@@ -454,7 +447,20 @@
                                 Content="Find" />
                         </StackPanel>
                     </Grid>
+                    <Border
+                        Grid.Row="3"
+                        Width="240"
+                        Padding="10,20,10,20"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        BorderBrush="Gray"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                        <TextBlock><Bold>Instruction:</Bold> <LineBreak />
+                            - Enter the empty set (<Bold>Φ</Bold>) like <Bold>{}</Bold>.</TextBlock>
+                    </Border>
                 </Grid>
+
             </TabItem>
             <!--  End Find Points Tab  -->
 

@@ -9,7 +9,10 @@ namespace Topology.Infra
         {
             var hashSet = new HashSet<string>();
 
-            if (set == null) return hashSet;
+            if (set == null || set == "{}" || set == "{ }") return hashSet;
+
+            set = set.Replace("{", "");
+            set = set.Replace("}", "");
 
             var elements = set.Split(',', StringSplitOptions.RemoveEmptyEntries);
             foreach (var element in elements) hashSet.Add(element.Trim());

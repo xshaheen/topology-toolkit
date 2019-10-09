@@ -212,7 +212,7 @@ namespace Topology.Infra
             if (set == null) throw new ArgumentNullException(nameof(set));
 
             // if > 6 will case overflow in the long type.
-            if (set.Count < 6) throw new Exception("Set elements must be less than 6 elements.");
+            if (set.Count > 5) throw new Exception("Set elements must be less than 6 elements.");
 
             var powerSet = PowerSet(set);
 
@@ -225,7 +225,7 @@ namespace Topology.Infra
             // loop to get all n subsets
             for (long i = 0; i < n; i++)
             {
-                TopologiesProcessPercent = (int) (i / n * 100);
+                TopologiesProcessPercent = (int) (((double)i / n) * 100);
 
                 var subset = new HashSet<HashSet<T>>();
 
@@ -294,6 +294,7 @@ namespace Topology.Infra
         public static HashSet<HashSet<T>> PowerSet<T>(HashSet<T> set)
         {
             if (set == null) throw new ArgumentNullException(nameof(set));
+            if (set.Count > 32) throw new Exception("Max set elements is 32 element");
 
             var n = 1 << set.Count;
             var powerSet = new HashSet<HashSet<T>>(n);
