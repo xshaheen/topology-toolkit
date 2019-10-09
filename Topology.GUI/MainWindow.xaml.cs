@@ -61,7 +61,7 @@ namespace Topology.GUI
             {
                 "Limit Points" => LimitPoints(set, subset, t),
                 "Closure Points" => ClosurePoints(set, subset, t),
-                "Interior Points" => InteriorPoints(subset, t),
+                "Interior Points" => InteriorPoints(set, subset, t),
                 "Exterior Points" => ExteriorPoints(set, subset, t),
                 "Boundary Points" => BoundaryPoints(set, subset, t),
                 _ => null

@@ -51,7 +51,7 @@ namespace Topology.CLI
                         Console.WriteLine(sp);
                         Console.WriteLine($"Limit Points: {SetToString(LimitPoints(set, subset, t))}");
                         Console.WriteLine($"Closure Points: {SetToString(ClosurePoints(set, subset, t))}");
-                        Console.WriteLine($"Interior Points: {SetToString(InteriorPoints(subset, t))}");
+                        Console.WriteLine($"Interior Points: {SetToString(InteriorPoints(set, subset, t))}");
                         Console.WriteLine($"Exterior Points: {SetToString(ExteriorPoints(set, subset, t))}");
                         Console.WriteLine($"Boundary Points: {SetToString(BoundaryPoints(set, subset, t))}");
                         Console.WriteLine(sp);

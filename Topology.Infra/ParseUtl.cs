@@ -7,10 +7,11 @@ namespace Topology.Infra
     {
         public static HashSet<string> StringToSet(string set)
         {
-            var elements = set.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            if (elements.Length == 0) return new HashSet<string>();
-
             var hashSet = new HashSet<string>();
+
+            if (set == null) return hashSet;
+
+            var elements = set.Split(',', StringSplitOptions.RemoveEmptyEntries);
             foreach (var element in elements) hashSet.Add(element.Trim());
 
             return hashSet;
@@ -18,10 +19,11 @@ namespace Topology.Infra
 
         public static HashSet<HashSet<string>> StringToSetOfSets(string set)
         {
-            var elements = set.Split("},", StringSplitOptions.RemoveEmptyEntries);
-
             var hashSet = new HashSet<HashSet<string>>();
 
+            if (set == null) return hashSet;
+
+            var elements = set.Split("},", StringSplitOptions.RemoveEmptyEntries);
             foreach (var e in elements)
                 hashSet.Add(StringToSet(
                     e.Replace("{", "").Replace("}", "")));

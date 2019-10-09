@@ -1,19 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Topology.Infra;
 using Xunit;
 
-
-namespace Topology.Test
+namespace Topology.Infra.Test
 {
     public class TopologyUtlTests
     {
         #region Comparer
 
-        private readonly Infra.Comparer<HashSet<char>> _setComparer = Comparer.GetIEqualityComparer
+        private readonly Comparer<HashSet<char>> _setComparer = Comparer.GetIEqualityComparer
             ((HashSet<char> x, HashSet<char> y) => x.SetEquals(y));
 
-        private readonly Infra.Comparer<HashSet<HashSet<char>>> _setOfSetComparer = Comparer
+        private readonly Comparer<HashSet<HashSet<char>>> _setOfSetComparer = Comparer
             .GetIEqualityComparer((HashSet<HashSet<char>> x, HashSet<HashSet<char>> y) =>
             {
                 if (x.Count != y.Count) return false;
@@ -417,6 +415,7 @@ namespace Topology.Test
         [Fact]
         public void Can_Find_Interior_Points()
         {
+            var set = new HashSet<char> {'a', 'b', 'c'};
             // Arrange
             var t = new HashSet<HashSet<char>>
             {
@@ -429,7 +428,7 @@ namespace Topology.Test
             var expected = new HashSet<char> {'a'};
 
             // Act
-            var result = TopologyUtl.InteriorPoints(subset, t);
+            var result = TopologyUtl.InteriorPoints(set, subset, t);
 
             // Assert
             Assert.Equal(expected, result, _setComparer);

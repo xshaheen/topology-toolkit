@@ -10,6 +10,8 @@ namespace Topology.Infra
     /// </summary>
     public class TopologyUtl
     {
+        public static int TopologiesProcessPercent { get; private set; }
+
         /// <summary>
         /// Find boundary points (aka frontier points) of a <paramref name="subset"/>.
         /// </summary>
@@ -18,7 +20,7 @@ namespace Topology.Infra
         public static HashSet<T> BoundaryPoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t)
         {
             var closurePoints = ClosurePoints(set, subset, t);
-            closurePoints.ExceptWith(InteriorPoints(subset, t));
+            closurePoints.ExceptWith(InteriorPoints(set, subset, t));
             return closurePoints;
         }
 
@@ -42,8 +44,17 @@ namespace Topology.Infra
         ///   to be an interior point of set A, if there exists an open set O such that p ∈ O ⊆ A
         /// * Interior of a set: is defined to be the union of all open sets contained in A.
         /// <typeparam name="T">Type of <paramref name="subset"/> elements.</typeparam>
-        public static HashSet<T> InteriorPoints<T>(HashSet<T> subset, HashSet<HashSet<T>> t)
+        public static HashSet<T> InteriorPoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t)
         {
+            // Assert that the "t" is a valid topology on the "set".
+            if (!IsTopology(t, set))
+                throw new Exception("The given topology is not a valid topology on the set.");
+
+            if (subset == null) throw new ArgumentNullException(nameof(subset));
+            // Assert that the "subset" is a valid subset of the "set"
+            if (!subset.IsSubsetOf(set)) 
+                throw new Exception("The given subset is not a valid subset of the set.");
+
             var interiors = new HashSet<T>();
 
             foreach (var g in t.Where(e => e.IsSubsetOf(subset)))
@@ -68,6 +79,12 @@ namespace Topology.Infra
         /// <typeparam name="T">Type of <paramref name="set"/> elements.</typeparam>
         public static HashSet<T> ClosurePoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t)
         {
+            // Assert that the "t" is a valid topology on the "set"
+            if (!IsTopology(t, set)) 
+                throw new Exception("The given topology is not a valid topology on the set.");
+
+            if (subset == null) throw new ArgumentNullException(nameof(subset));
+
             // Generate all closed set for every element in t
             var allClosedSets = new HashSet<HashSet<T>>(t.Count);
             foreach (var e in t) allClosedSets.Add(ClosedSet(set, e));
@@ -93,6 +110,15 @@ namespace Topology.Infra
         /// <typeparam name="T">Set elements type.</typeparam>
         public static HashSet<T> LimitPoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t)
         {
+            // Assert that the "t" is a valid topology on the "set"
+            if (!IsTopology(t, set)) 
+                throw new Exception("The given topology is not a valid topology on the set.");
+
+            if (subset == null) throw new ArgumentNullException(nameof(subset));
+            // Assert that the "subset" is a valid subset of the "set"
+            if (!subset.IsSubsetOf(set)) 
+                throw new Exception("The given subset is not a valid subset of the set.");
+            
             var limitPoints = new HashSet<T>();
 
             foreach (var point in set)
@@ -121,7 +147,7 @@ namespace Topology.Infra
         }
 
         /// <summary>
-        /// Generates all topologies defined on a given set In O(2^(2^set.Count -2)).
+        /// Generates all topologies defined on a given set (where set.Count &lt; 6) in O(2^(2^set.Count -2)).
         /// </summary>
         /// Example:
         /// - Input: S = {'c', 'b', 'a'} // See unit test.
@@ -183,6 +209,11 @@ namespace Topology.Infra
         /// <returns>Set of all topologies that defined on <paramref name="set"/>.</returns>
         public static IEnumerable<HashSet<HashSet<T>>> Topologies<T>(HashSet<T> set)
         {
+            if (set == null) throw new ArgumentNullException(nameof(set));
+
+            // if > 6 will case overflow in the long type.
+            if (set.Count < 6) throw new Exception("Set elements must be less than 6 elements.");
+
             var powerSet = PowerSet(set);
 
             // remove the set and the empty set. for example, for set of 4 element this
@@ -194,6 +225,8 @@ namespace Topology.Infra
             // loop to get all n subsets
             for (long i = 0; i < n; i++)
             {
+                TopologiesProcessPercent = (int) (i / n * 100);
+
                 var subset = new HashSet<HashSet<T>>();
 
                 // loop though every element in the set and determine with number 
@@ -224,6 +257,9 @@ namespace Topology.Infra
         /// <returns>Returns true if the <paramref name="t"/> if topology on the <paramref name="set"/>, otherwise return false.</returns>
         public static bool IsTopology<T>(HashSet<HashSet<T>> t, HashSet<T> set)
         {
+            if (t == null) throw new ArgumentNullException(nameof(t));
+            if (set == null) throw new ArgumentNullException(nameof(set));
+
             var comparer = Comparer.GetIEqualityComparer((IEnumerable<T> x, IEnumerable<T> y)
                 => ((HashSet<T>) x).SetEquals(y));
 
@@ -257,6 +293,8 @@ namespace Topology.Infra
         /// <returns>The power set of the set.</returns>
         public static HashSet<HashSet<T>> PowerSet<T>(HashSet<T> set)
         {
+            if (set == null) throw new ArgumentNullException(nameof(set));
+
             var n = 1 << set.Count;
             var powerSet = new HashSet<HashSet<T>>(n);
 
@@ -285,26 +323,12 @@ namespace Topology.Infra
         /// <typeparam name="T">Type of <paramref name="set"/> elements.</typeparam>
         public static HashSet<T> ClosedSet<T>(HashSet<T> set, HashSet<T> subset)
         {
-            if (subset.Count > set.Count)
-                throw new Exception("The subset is bigger than the set!");
+            if (set == null) throw new ArgumentNullException(nameof(set));
+            if (subset == null) throw new ArgumentNullException(nameof(subset));
+            if (!subset.IsSubsetOf(set)) 
+                throw new Exception("The given subset not a valid subset of the set.");
 
             return set.Where(e => !subset.Contains(e)).ToHashSet();
-        }
-
-        /// <summary>
-        /// Converts the set to printable string.
-        /// </summary>
-        /// <typeparam name="T">Type of set elements.</typeparam>
-        /// <param name="set">The set to convert to string</param>
-        /// <returns>Printable string represent the set.</returns>
-        public static string SetToString<T>(HashSet<HashSet<HashSet<T>>> set)
-        {
-            var sb = new StringBuilder();
-            var counter = 1;
-
-            foreach (var e in set) sb.Append($"{counter++,4}. {SetToString(e)}\n");
-
-            return sb.ToString();
         }
 
         /// <summary>
@@ -317,11 +341,15 @@ namespace Topology.Infra
         {
             var sb = new StringBuilder("{ ");
 
-            foreach (var e in set) sb.Append(SetToString(e) + ", ");
+            if (set != null)
+            {
+                foreach (var e in set) sb.Append(SetToString(e) + ", ");
 
-            // remove the extra ", "
-            var len = sb.Length;
-            if (len > 1) sb.Remove(len - 2, 2);
+                // remove the extra ", "
+                var len = sb.Length;
+                if (len > 1) sb.Remove(len - 2, 2);
+            }
+
             sb.Append(" }");
 
             return sb.ToString();
@@ -337,11 +365,14 @@ namespace Topology.Infra
         {
             var sb = new StringBuilder("{");
 
-            foreach (var e in set) sb.Append(e + ", ");
+            if (set != null)
+            {
+                foreach (var e in set) sb.Append(e + ", ");
 
-            var len = sb.Length;
-            // remove the extra ", "
-            if (len > 1) sb.Remove(len - 2, 2);
+                var len = sb.Length;
+                // remove the extra ", "
+                if (len > 1) sb.Remove(len - 2, 2);
+            }
 
             sb.Append("}");
 
