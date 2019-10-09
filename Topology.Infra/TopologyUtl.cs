@@ -18,7 +18,7 @@ namespace Topology.Infra
         public static HashSet<T> BoundaryPoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t)
         {
             var closurePoints = ClosurePoints(set, subset, t);
-            closurePoints.ExceptWith(InteriorPoints(set, subset, t));
+            closurePoints.ExceptWith(InteriorPoints(subset, t));
             return closurePoints;
         }
 
@@ -41,8 +41,8 @@ namespace Topology.Infra
         /// * Let (X,t) be the topological space and A ⊆ X, then a point p∈A is said
         ///   to be an interior point of set A, if there exists an open set O such that p ∈ O ⊆ A
         /// * Interior of a set: is defined to be the union of all open sets contained in A.
-        /// <typeparam name="T">Type of <paramref name="set"/> elements.</typeparam>
-        public static HashSet<T> InteriorPoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t)
+        /// <typeparam name="T">Type of <paramref name="subset"/> elements.</typeparam>
+        public static HashSet<T> InteriorPoints<T>(HashSet<T> subset, HashSet<HashSet<T>> t)
         {
             var interiors = new HashSet<T>();
 
@@ -93,9 +93,6 @@ namespace Topology.Infra
         /// <typeparam name="T">Set elements type.</typeparam>
         public static HashSet<T> LimitPoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t)
         {
-            var comparer = Comparer.GetIEqualityComparer((IEnumerable<T> x, IEnumerable<T> y)
-                => x.SequenceEqual(y));
-
             var limitPoints = new HashSet<T>();
 
             foreach (var point in set)

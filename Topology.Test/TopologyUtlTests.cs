@@ -10,10 +10,10 @@ namespace Topology.Test
     {
         #region Comparer
 
-        private readonly Comparer<HashSet<char>> _setComparer = Comparer.GetIEqualityComparer
+        private readonly Infra.Comparer<HashSet<char>> _setComparer = Comparer.GetIEqualityComparer
             ((HashSet<char> x, HashSet<char> y) => x.SetEquals(y));
 
-        private readonly Comparer<HashSet<HashSet<char>>> _setOfSetComparer = Comparer
+        private readonly Infra.Comparer<HashSet<HashSet<char>>> _setOfSetComparer = Comparer
             .GetIEqualityComparer((HashSet<HashSet<char>> x, HashSet<HashSet<char>> y) =>
             {
                 if (x.Count != y.Count) return false;
@@ -22,6 +22,7 @@ namespace Topology.Test
 
                 foreach (var s in x)
                 {
+                    // ReSharper disable once PossibleUnintendedLinearSearchInSet
                     exist = y.Contains(s, Comparer.GetIEqualityComparer(
                         (HashSet<char> a, HashSet<char> b) => a.SetEquals(b)));
                     if (!exist) break;
@@ -355,7 +356,7 @@ namespace Topology.Test
             };
 
             // Act
-            var result = TopologyUtl.Topologies(set);
+            var result = TopologyUtl.Topologies(set).ToHashSet();
 
             // Assert - the two sets is equals
             Assert.Equal(expected, result, _setOfSetComparer);
@@ -417,7 +418,6 @@ namespace Topology.Test
         public void Can_Find_Interior_Points()
         {
             // Arrange
-            var set = new HashSet<char> {'a', 'b', 'c'};
             var t = new HashSet<HashSet<char>>
             {
                 new HashSet<char> {'a', 'b', 'c'},
@@ -429,7 +429,7 @@ namespace Topology.Test
             var expected = new HashSet<char> {'a'};
 
             // Act
-            var result = TopologyUtl.InteriorPoints(set, subset, t);
+            var result = TopologyUtl.InteriorPoints(subset, t);
 
             // Assert
             Assert.Equal(expected, result, _setComparer);

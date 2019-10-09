@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using Excel = Microsoft.Office.Interop.Excel;
 using static Topology.Infra.TopologyUtl;
 
@@ -85,7 +84,7 @@ namespace Topology.CLI
             Console.WriteLine(Sp);
             Console.WriteLine($"Limit Points: {SetToString(LimitPoints(set, subset, t))}");
             Console.WriteLine($"Closure Points: {SetToString(ClosurePoints(set, subset, t))}");
-            Console.WriteLine($"Interior Points: {SetToString(InteriorPoints(set, subset, t))}");
+            Console.WriteLine($"Interior Points: {SetToString(InteriorPoints(subset, t))}");
             Console.WriteLine($"Exterior Points: {SetToString(ExteriorPoints(set, subset, t))}");
             Console.WriteLine($"Boundary Points: {SetToString(BoundaryPoints(set, subset, t))}");
             Console.WriteLine(Sp);

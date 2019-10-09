@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Topology
+namespace Topology.Infra
 {
     public class Comparer
     {
