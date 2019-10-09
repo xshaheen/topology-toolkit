@@ -4,7 +4,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Media;
 
-namespace Topology.GUI
+namespace Topology.GUI.Infrastructure
 {
     /// <summary>
     /// Adorner for the watermark
