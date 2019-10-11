@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Topology.Infra
 {
@@ -206,8 +204,6 @@ namespace Topology.Infra
         ///   The number of subsets of all size is 2^n
         /// <typeparam name="T">Set elements type.</typeparam>
         /// <param name="set">The set that a topologies dif</param>
-        /// <param name="ct"></param>
-        /// <param name="progress"></param>
         /// <returns>Set of all topologies that defined on <paramref name="set"/>.</returns>
         public static IEnumerable<HashSet<HashSet<T>>> Topologies<T>(HashSet<T> set)
         {

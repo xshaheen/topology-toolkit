@@ -449,8 +449,8 @@
                         BorderBrush="Gray"
                         BorderThickness="1"
                         CornerRadius="4">
-                        <TextBlock><Bold>Instruction:</Bold> <LineBreak />
-                            - Enter the empty set (<Bold>Φ</Bold>) like <Bold>{}</Bold>.</TextBlock>
+                        <TextBlock><Bold>Instruction:</Bold> 
+                            <LineBreak />- Enter the empty set (<Bold>Φ</Bold>) like <Bold>{}</Bold>.</TextBlock>
                     </Border>
                 </Grid>
 
