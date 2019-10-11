@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using Excel = Microsoft.Office.Interop.Excel;
-using static Topology.Infra.TopologyUtl;
 using static Topology.Infra.ParseUtl;
+using static Topology.Infra.TopologyUtl;
 
 namespace Topology.GUI
 {
@@ -16,60 +18,184 @@ namespace Topology.GUI
     // ReSharper disable once RedundantExtendsListEntry
     public partial class MainWindow : Window
     {
+        private CancellationTokenSource _cancelToken;
+        
+        private Progress<double> _progressOperation;
+
         public MainWindow()
         {
             InitializeComponent();
+            CancelBtn.IsEnabled = false;
         }
 
         #region Tabs
 
         #region Topology
 
-        private void GenerateTopologiesBtn_Click(object sender, RoutedEventArgs e)
+        private async void GenerateTopologiesBtn_Click(object sender, RoutedEventArgs e)
         {
             var set = StringToSet(TSetTextBox.Text);
-            
+
+            var sort = SortCheckBox.IsChecked != null && SortCheckBox.IsChecked != false;
+            if (sort && set.Count > 4)
+            {
+                MessageBox.Show("I can not sort topologies defined on a set has element > 4 it cost a lot of time!", "Error");
+                return;
+            }
+
+            _cancelToken = new CancellationTokenSource();
+            GenerateTopologiesBtn.IsEnabled = false;
+            ToExcelBtn.IsEnabled = false;
+            CancelBtn.IsEnabled = true;
+
+            _progressOperation = new Progress<double>(value => TopologyProcessBar.Value = value);
+
+            TopologyProcessBar.Visibility = Visibility.Visible;
+
             TopologiesDataGrid.Items.Clear();
-            
+
+            StatusTxt.Text = "Generating...";
+
             try
             {
-                var sort = SortCheckBox.IsChecked != null && SortCheckBox.IsChecked != false;
-
-                if (sort && set.Count > 4)
-                {
-                    MessageBox.Show("I can not sort topologies defined on a set has element > 4 it cost a lot of time!", "Error");
-                    return;
-                }
-
                 if (sort)
                 {  
-                    var sortedTopologies = Topologies(set).ToList();
-                    sortedTopologies.Sort(CompareSetByLength);
+                    var topologies = Topologies(set).ToList();
+                    topologies.Sort(CompareSetByLength);
 
                     var counter = 0;
-                    foreach (var topology in sortedTopologies)
-                        TopologiesDataGrid.Items.Add(new ItemData{Index = ++counter, Topology = SetToString(topology)});
+                    foreach (var topology in topologies)
+                        TopologiesDataGrid.Items.Add(new ItemData
+                            {Index = ++counter, Topology = SetToString(topology)});
                 }
                 else
                 {
-                    var counter = 0;
-                    foreach (var topology in Topologies(set))
-                        TopologiesDataGrid.Items.Add(new ItemData{Index = ++counter, Topology = SetToString(topology)});
+                    await TopologiesToDataGridAsync(set, _cancelToken.Token, _progressOperation);
                 }
 
+                StatusTxt.Text ="Operation Completed.";
+            }
+            catch (OperationCanceledException ex)
+            {
+                StatusTxt.Text ="Operation Cancelled | " + ex.Message;
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error!");
+                StatusTxt.Text = "Operation Cancelled | " + ex.Message;
             }
-            
+            finally
+            {
+                _cancelToken.Dispose();
+                GenerateTopologiesBtn.IsEnabled = true;
+                ToExcelBtn.IsEnabled = true;
+                CancelBtn.IsEnabled = false;
+                TopologyProcessBar.Visibility = Visibility.Hidden;
+            }
         }
 
-        private void GenerateToExcelBtn_Click(object sender, RoutedEventArgs e)
+        public async Task<HashSet<HashSet<HashSet<T>>>> TopologiesToDataGridAsync<T>(HashSet<T> set, CancellationToken ct, IProgress<double> progress)
+        {
+            // if > 6 will case overflow in the long type.
+            if (set.Count > 5) throw new Exception("Set elements must be less than 6 elements.");
+
+            var topologies = new HashSet<HashSet<HashSet<T>>>();
+            progress.Report(0);
+
+            await Task.Run(() =>
+            {
+                var powerSet = PowerSet(set);
+
+                // remove the set and the empty set. for example, for set of 4 element this
+                // make the complexity decrease from 2^(2^4)= 65,536 to 2^(2^4-2)= 16,384
+                powerSet.RemoveWhere(s => s.Count == 0);         // O(2^set.Count)
+                powerSet.RemoveWhere(s => s.Count == set.Count); // O(2^set.Count)
+
+                var counter = 0;
+                var n = 1L << powerSet.Count;
+                // loop to get all n subsets
+                for (long i = 0; i < n; i++)
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    if (i % 100 == 0)
+                    {
+                        var x = i / (decimal) n;
+                        var p = 100 * x;
+                        progress.Report((double)p);
+                    }
+
+                    var subset = new HashSet<HashSet<T>>();
+
+                    // loop though every element in the set and determine with number 
+                    // should present in the current subset.
+                    var j = 0;
+                    foreach (var e in powerSet)
+                        // if the jth element (bit) in the ith subset (binary number of i) add it.
+                        if (((1L << j++) & i) > 0)
+                            subset.Add(e);
+
+                    subset.Add(new HashSet<T>());
+                    subset.Add(set);
+
+                    if (IsTopology(subset, set))
+                    {
+                        this.Dispatcher?.Invoke(delegate
+                            {
+                                TopologiesDataGrid.Items.Add(new ItemData
+                                    {Index = ++counter, Topology = SetToString(subset)});
+                            }
+                        );
+                    }
+                }
+            }, ct);
+
+            return topologies;
+
+        }
+
+        private async void GenerateToExcelBtn_Click(object sender, RoutedEventArgs e)
         {
             var set = StringToSet(TSetTextBox.Text);
+            var sort = SortCheckBox.IsChecked != null && SortCheckBox.IsChecked != false;
 
-            TopologiesToExcel(set, SortCheckBox.IsChecked != null && SortCheckBox.IsChecked != false);
+            if (sort && set.Count > 4)
+            {
+                MessageBox.Show("I can not sort topologies defined on a set that has greater than 4 elements. It cost a lot of time!", "Error");
+                return;
+            }
+
+            _cancelToken = new CancellationTokenSource();
+            GenerateTopologiesBtn.IsEnabled = false;
+            ToExcelBtn.IsEnabled = false;
+            CancelBtn.IsEnabled = true;
+
+            StatusTxt.Text = "Generating...";
+
+            try
+            {
+                await Task.Run(() => TopologiesToExcel(set, _cancelToken.Token, sort));
+                StatusTxt.Text ="Operation Completed.";
+            }
+            catch (OperationCanceledException ex)
+            {
+                StatusTxt.Text ="Operation Cancelled | " + ex.Message;
+            }
+            catch (Exception ex)
+            {
+                StatusTxt.Text = "Operation Cancelled | " + ex.Message;
+            }
+            finally
+            {
+                _cancelToken.Dispose();
+                GenerateTopologiesBtn.IsEnabled = true;
+                ToExcelBtn.IsEnabled = true;
+                CancelBtn.IsEnabled = false;
+            }
+        }
+
+        private void CancelBtn_OnClick(object sender, RoutedEventArgs e)
+        {
+            _cancelToken.Cancel();
         }
 
         #endregion
@@ -212,16 +338,10 @@ namespace Topology.GUI
 
         #region To Excel
 
-        public static void TopologiesToExcel<T>(HashSet<T> set, bool sort = false)
+        public static void TopologiesToExcel<T>(HashSet<T> set, CancellationToken ct, bool sort = false)
         {
             try
             {
-                if (sort && set.Count > 4)
-                {
-                    MessageBox.Show("I can not sort topologies defined on a set has element > 4 it cost a lot of time!", "Error");
-                    return;
-                }
-
                 // Just for force the method to check the assertions and
                 // throw any exception before open the excel
                 var _ = Topologies(set).FirstOrDefault();
@@ -235,7 +355,6 @@ namespace Topology.GUI
                 sheet.Cells[1, "A"] = "Number";
                 sheet.Cells[1, "B"] = "Topologies";
 
-
                 if (sort)
                 {  
                     var sortedTopologies = Topologies(set).ToList();
@@ -244,6 +363,7 @@ namespace Topology.GUI
                     var i = 2;
                     foreach (var topology in sortedTopologies)
                     {
+                        ct.ThrowIfCancellationRequested();
                         sheet.Cells[i, "A"] = i - 1;
                         sheet.Cells[i, "B"] = SetToString(topology);
                         i++;
@@ -254,6 +374,7 @@ namespace Topology.GUI
                     var i = 2;
                     foreach (var topology in Topologies(set))
                     {
+                        ct.ThrowIfCancellationRequested();
                         sheet.Cells[i, "A"] = i - 1;
                         sheet.Cells[i, "B"] = SetToString(topology);
                         i++;
@@ -281,9 +402,13 @@ namespace Topology.GUI
         
                 excelApp.Quit();
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception e)
             {
-                MessageBox.Show($"Error: {e.Message}.", "Error!");
+                MessageBox.Show($"Error: {e.Message} | {e.Source}", "Error!");
             }
         }
 

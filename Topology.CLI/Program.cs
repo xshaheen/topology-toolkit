@@ -7,6 +7,7 @@ namespace Topology.CLI
 {
     public class Program
     {
+        // ToDo: Add validation and error messages.
         public static void Main()
         { 
             const string sp = "-----------------------------------";

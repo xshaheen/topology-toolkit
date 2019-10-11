@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Topology.Infra
 {
@@ -10,8 +12,6 @@ namespace Topology.Infra
     /// </summary>
     public class TopologyUtl
     {
-        public static int TopologiesProcessPercent { get; private set; }
-
         /// <summary>
         /// Find boundary points (aka frontier points) of a <paramref name="subset"/>.
         /// </summary>
@@ -177,12 +177,12 @@ namespace Topology.Infra
         ///   001 010 011
         ///   001         100 101
         ///       010     100     110
-        ///
+        /// 
         ///   Single-double-double
         ///   001     011     101
         ///       010 011         110
         ///               100 101 110
-        ///
+        /// 
         ///   single-single-double-double 
         ///   001 010 011     101
         ///   001 010 011         110
@@ -191,7 +191,7 @@ namespace Topology.Infra
         ///       010 011 100     110
         ///       010     100 101 110
         ///   
-        ///
+        /// 
         ///   Power set
         ///   001 010 011 100 101 110
         /// - From this pattern the elements of the power set is exist or not
@@ -206,6 +206,8 @@ namespace Topology.Infra
         ///   The number of subsets of all size is 2^n
         /// <typeparam name="T">Set elements type.</typeparam>
         /// <param name="set">The set that a topologies dif</param>
+        /// <param name="ct"></param>
+        /// <param name="progress"></param>
         /// <returns>Set of all topologies that defined on <paramref name="set"/>.</returns>
         public static IEnumerable<HashSet<HashSet<T>>> Topologies<T>(HashSet<T> set)
         {
@@ -225,8 +227,6 @@ namespace Topology.Infra
             // loop to get all n subsets
             for (long i = 0; i < n; i++)
             {
-                TopologiesProcessPercent = (int) (((double)i / n) * 100);
-
                 var subset = new HashSet<HashSet<T>>();
 
                 // loop though every element in the set and determine with number 
