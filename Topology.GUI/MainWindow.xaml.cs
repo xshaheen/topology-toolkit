@@ -25,7 +25,7 @@ namespace Topology.GUI
         public MainWindow()
         {
             InitializeComponent();
-            CancelBtn.IsEnabled = false;
+            TopologyTabCancelBtn.IsEnabled = false;
         }
 
         #region Tabs
@@ -34,9 +34,9 @@ namespace Topology.GUI
 
         private async void GenerateTopologiesBtn_Click(object sender, RoutedEventArgs e)
         {
-            var set = StringToSet(TSetTextBox.Text);
+            var set = StringToSet(TopologyTabSetTextBox.Text);
 
-            var sort = SortCheckBox.IsChecked != null && SortCheckBox.IsChecked != false;
+            var sort = TopologyTabSortCheckBox.IsChecked != null && TopologyTabSortCheckBox.IsChecked != false;
             if (sort && set.Count > 4)
             {
                 MessageBox.Show("I can not sort topologies defined on a set has element > 4 it cost a lot of time!", "Error");
@@ -46,15 +46,15 @@ namespace Topology.GUI
             _cancelToken = new CancellationTokenSource();
             GenerateTopologiesBtn.IsEnabled = false;
             ToExcelBtn.IsEnabled = false;
-            CancelBtn.IsEnabled = true;
+            TopologyTabCancelBtn.IsEnabled = true;
 
-            _progressOperation = new Progress<double>(value => TopologyProcessBar.Value = value);
+            _progressOperation = new Progress<double>(value => TopologyTabProcessBar.Value = value);
 
-            TopologyProcessBar.Visibility = Visibility.Visible;
+            TopologyTabProcessBar.Visibility = Visibility.Visible;
 
             TopologiesDataGrid.Items.Clear();
 
-            StatusTxt.Text = "Generating...";
+            TopologyTabStatusTxt.Text = "Generating...";
 
             try
             {
@@ -73,23 +73,23 @@ namespace Topology.GUI
                     await TopologiesToDataGridAsync(set, _cancelToken.Token, _progressOperation);
                 }
 
-                StatusTxt.Text ="Operation Completed.";
+                TopologyTabStatusTxt.Text ="Operation Completed.";
             }
             catch (OperationCanceledException ex)
             {
-                StatusTxt.Text ="Operation Cancelled | " + ex.Message;
+                TopologyTabStatusTxt.Text ="Operation Cancelled | " + ex.Message;
             }
             catch (Exception ex)
             {
-                StatusTxt.Text = "Operation Cancelled | " + ex.Message;
+                TopologyTabStatusTxt.Text = "Operation Cancelled | " + ex.Message;
             }
             finally
             {
                 _cancelToken.Dispose();
                 GenerateTopologiesBtn.IsEnabled = true;
                 ToExcelBtn.IsEnabled = true;
-                CancelBtn.IsEnabled = false;
-                TopologyProcessBar.Visibility = Visibility.Hidden;
+                TopologyTabCancelBtn.IsEnabled = false;
+                TopologyTabProcessBar.Visibility = Visibility.Hidden;
             }
         }
 
@@ -155,8 +155,8 @@ namespace Topology.GUI
 
         private async void GenerateToExcelBtn_Click(object sender, RoutedEventArgs e)
         {
-            var set = StringToSet(TSetTextBox.Text);
-            var sort = SortCheckBox.IsChecked != null && SortCheckBox.IsChecked != false;
+            var set = StringToSet(TopologyTabSetTextBox.Text);
+            var sort = TopologyTabSortCheckBox.IsChecked != null && TopologyTabSortCheckBox.IsChecked != false;
 
             if (sort && set.Count > 4)
             {
@@ -167,29 +167,29 @@ namespace Topology.GUI
             _cancelToken = new CancellationTokenSource();
             GenerateTopologiesBtn.IsEnabled = false;
             ToExcelBtn.IsEnabled = false;
-            CancelBtn.IsEnabled = true;
+            TopologyTabCancelBtn.IsEnabled = true;
 
-            StatusTxt.Text = "Generating...";
+            TopologyTabStatusTxt.Text = "Generating...";
 
             try
             {
                 await Task.Run(() => TopologiesToExcel(set, _cancelToken.Token, sort));
-                StatusTxt.Text ="Operation Completed.";
+                TopologyTabStatusTxt.Text ="Operation Completed.";
             }
             catch (OperationCanceledException ex)
             {
-                StatusTxt.Text ="Operation Cancelled | " + ex.Message;
+                TopologyTabStatusTxt.Text ="Operation Cancelled | " + ex.Message;
             }
             catch (Exception ex)
             {
-                StatusTxt.Text = "Operation Cancelled | " + ex.Message;
+                TopologyTabStatusTxt.Text = "Operation Cancelled | " + ex.Message;
             }
             finally
             {
                 _cancelToken.Dispose();
                 GenerateTopologiesBtn.IsEnabled = true;
                 ToExcelBtn.IsEnabled = true;
-                CancelBtn.IsEnabled = false;
+                TopologyTabCancelBtn.IsEnabled = false;
             }
         }
 
@@ -205,21 +205,21 @@ namespace Topology.GUI
         private void FindPointsBtn_Click(object sender, RoutedEventArgs e)
         {
 
-            var setBox = PSetTextBox.Text;
+            var setBox = PointsTabSetTextBox.Text;
             if (setBox.Length == 0)
             {
                 MessageBox.Show("Please fill the set field.", "Required Field!");
                 return;
             }
 
-            var subsetBox = SubsetTextBox.Text;
+            var subsetBox = PointsTabSubsetTextBox.Text;
             if (subsetBox.Length == 0)
             {
                 MessageBox.Show("Please fill the subset field.", "Required Field!");
                 return;
             }
 
-            var tBox = TopologyTextBox.Text;
+            var tBox = PointsTabTopologyTextBox.Text;
             if (tBox.Length == 0)
             {
                 MessageBox.Show("Please fill the topology field.", "Required Field!");
@@ -230,7 +230,7 @@ namespace Topology.GUI
             var subset = StringToSet(subsetBox);
             var t = StringToSetOfSets(tBox);
 
-            var func = PointsComboBox.Text;
+            var func = PointsTabPointsComboBox.Text;
 
             if (func.Length == 0)
             {
@@ -250,7 +250,7 @@ namespace Topology.GUI
                     _ => null
                 };
 
-                PointsResult.Text = SetToString(result);
+                PointsTabPointsResult.Text = SetToString(result);
             }
             catch (Exception ex)
             {
@@ -426,6 +426,11 @@ namespace Topology.GUI
         }
 
         #endregion
+
+        private void FindSubsetsPointsBtn_Click(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     class ItemData

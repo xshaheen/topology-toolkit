@@ -77,11 +77,12 @@
 
         <!--  Tabs  -->
         <TabControl
-            Name="TopologyTabControl"
+            Name="TabsControl"
             Grid.Row="0"
             Margin="10"
             Background="White"
             BorderThickness="0">
+
             <!--  Tab Style  -->
             <TabControl.Resources>
                 <Style TargetType="TabItem">
@@ -115,12 +116,14 @@
                 </Style>
             </TabControl.Resources>
             <!--  End Tab Style  -->
-            <!--  Find Topologies Tab  -->
+
+            <!-- Topologies Tab  -->
             <TabItem
                 Width="120"
                 Height="30"
                 VerticalAlignment="Top"
                 ToolTip="Generate all topologies defined on a set.">
+
                 <TabItem.Header>
                     <TextBlock
                         FontSize="14"
@@ -139,22 +142,25 @@
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="0" Margin="0,5,0,5">
+
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="PointsLabel" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="TopologiesLabel" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
+
                         <Label
                             Grid.Column="0"
                             Margin="0,0,4,0"
                             Content="Set"
                             FontSize="14"
                             FontWeight="Medium" />
+
                         <AdornerDecorator
                             Grid.Row="0"
                             Grid.Column="1"
                             ToolTip="Enter the set elements like: a, b, c">
                             <TextBox
-                                x:Name="TSetTextBox"
+                                x:Name="TopologyTabSetTextBox"
                                 VerticalContentAlignment="Center"
                                 FontSize="14">
                                 <infrastructure:WatermarkService.Watermark>
@@ -203,7 +209,7 @@
                     </DataGrid>
 
                     <TextBlock
-                        Name="StatusTxt"
+                        Name="TopologyTabStatusTxt"
                         Grid.Row="2"
                         Margin="0,0.4,0,0"
                         HorizontalAlignment="Left"
@@ -211,29 +217,34 @@
                         TextWrapping="Wrap" />
 
                     <Grid Grid.Row="3" Margin="0,5,0,5">
+
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
+
                         <CheckBox
-                            x:Name="SortCheckBox"
+                            x:Name="TopologyTabSortCheckBox"
                             Grid.Column="0"
                             Margin="5,10"
                             VerticalAlignment="Center"
                             Content="Sort by length."
                             FontSize="15"
                             ToolTip="Sort the topologies in increasing order by the length." />
+
                         <StackPanel
                             Grid.Column="1"
                             Margin="0,5,0,5"
                             HorizontalAlignment="Right"
                             Orientation="Horizontal">
+
                             <ProgressBar
-                                Name="TopologyProcessBar"
+                                Name="TopologyTabProcessBar"
                                 Width="200"
                                 Height="25"
                                 Margin="10,0,20,0"
                                 Visibility="Hidden" />
+
                             <Button
                                 Name="ToExcelBtn"
                                 Width="110"
@@ -243,6 +254,7 @@
                                 Click="GenerateToExcelBtn_Click"
                                 Content="Generate To Excel"
                                 ToolTip="Generate or Export the topologies to Excel file." />
+
                             <Button
                                 Name="GenerateTopologiesBtn"
                                 Width="70"
@@ -251,8 +263,9 @@
                                 Padding="4,2"
                                 Click="GenerateTopologiesBtn_Click"
                                 Content="Generate" />
+
                             <Button
-                                Name="CancelBtn"
+                                Name="TopologyTabCancelBtn"
                                 Width="70"
                                 Height="40"
                                 Margin="5,4,4,5"
@@ -263,76 +276,53 @@
                         </StackPanel>
                     </Grid>
                 </Grid>
-
             </TabItem>
-            <!--  End Find Topologies Tab  -->
+            <!--  End Topologies Tab  -->
 
-            <!--  Find Points Tab  -->
+            <!--  Subsets Points Tab  -->
             <TabItem
                 Width="120"
                 Height="30"
                 VerticalAlignment="Top"
-                ToolTip="Find limit, interior, closure, boundary and exterior points.">
+                ToolTip="For a given set and topology generate all point category for all subset.">
+
                 <TabItem.Header>
                     <TextBlock
                         FontSize="14"
                         FontWeight="Bold"
                         Foreground="#FFA2A2A2"
-                        Text="Points" />
+                        Text="Subsets Points" />
                 </TabItem.Header>
-                <Grid Margin="40,10,40,5" IsSharedSizeScope="True">
+
+                <Grid Margin="30,10,30,10" IsSharedSizeScope="True">
+
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="120*" />
                     </Grid.RowDefinitions>
 
-                    <Grid Grid.Row="0" Margin="0,20,0,15">
+                    <Grid Grid.Row="0" Margin="0,5,0,5">
+
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="PointsLabel" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="SubsetPointsLabel" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+
                         <Label
                             Grid.Column="0"
-                            Content="Points Set"
-                            FontSize="14"
-                            FontWeight="Medium" />
-                        <ComboBox
-                            Name="PointsComboBox"
-                            Grid.Column="1"
-                            FontSize="14"
-                            ToolTip="Choice the points set.">
-                            <ComboBoxItem>Limit Points</ComboBoxItem>
-                            <ComboBoxItem>Closure Points</ComboBoxItem>
-                            <ComboBoxItem>Interior Points</ComboBoxItem>
-                            <ComboBoxItem>Exterior Points</ComboBoxItem>
-                            <ComboBoxItem>Boundary Points</ComboBoxItem>
-                        </ComboBox>
-                    </Grid>
-                    <Grid Grid.Row="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="16*" SharedSizeGroup="PointsLabel" />
-                            <ColumnDefinition Width="133*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <Label
-                            Grid.Row="0"
-                            Grid.Column="0"
+                            Margin="0,0,4,0"
                             Content="Set"
                             FontSize="14"
                             FontWeight="Medium" />
+
                         <AdornerDecorator
                             Grid.Row="0"
                             Grid.Column="1"
-                            ToolTip="Enter set elements like a, b, c">
+                            ToolTip="Enter the set elements like: a, b, c">
                             <TextBox
-                                x:Name="PSetTextBox"
+                                Name="SubsetPointsTabSetTextBox"
                                 VerticalContentAlignment="Center"
                                 FontSize="14">
                                 <infrastructure:WatermarkService.Watermark>
@@ -345,42 +335,38 @@
                                 </infrastructure:WatermarkService.Watermark>
                             </TextBox>
                         </AdornerDecorator>
+
+                        <Button
+                            Grid.Column="2"
+                            Width="80"
+                            Height="30"
+                            Margin="20,0,5,0"
+                            Padding="4,2"
+                            Click="FindSubsetsPointsBtn_Click"
+                            Content="Find"
+                            ToolTip="Find all points category for all subsets." />
+                    </Grid>
+
+                    <Grid Grid.Row="1" Margin="0,5,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="PointsLabel" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
                         <Label
-                            Grid.Row="1"
                             Grid.Column="0"
-                            Content="Subset"
-                            FontSize="14"
-                            FontWeight="Medium" />
-                        <AdornerDecorator
-                            Grid.Row="1"
-                            Grid.Column="1"
-                            ToolTip="Enter subset elements like a, b, c">
-                            <TextBox
-                                x:Name="SubsetTextBox"
-                                VerticalContentAlignment="Center"
-                                FontSize="14">
-                                <infrastructure:WatermarkService.Watermark>
-                                    <TextBlock
-                                        Margin="4"
-                                        VerticalAlignment="Center"
-                                        FontSize="12">
-                                        Hint: a, b
-                                    </TextBlock>
-                                </infrastructure:WatermarkService.Watermark>
-                            </TextBox>
-                        </AdornerDecorator>
-                        <Label
-                            Grid.Row="2"
-                            Grid.Column="0"
+                            Margin="0,0,4,0"
                             Content="Topology"
                             FontSize="14"
                             FontWeight="Medium" />
+
                         <AdornerDecorator
-                            Grid.Row="2"
+                            Grid.Row="0"
                             Grid.Column="1"
                             ToolTip="Enter set elements like {}, {a,b,c}, {a}, {b}, {a,b}">
                             <TextBox
-                                x:Name="TopologyTextBox"
+                                Name="SubsetPointsTabTopologyTextBox"
                                 VerticalContentAlignment="Center"
                                 FontSize="14">
                                 <infrastructure:WatermarkService.Watermark>
@@ -393,24 +379,230 @@
                                 </infrastructure:WatermarkService.Watermark>
                             </TextBox>
                         </AdornerDecorator>
+                        
                     </Grid>
+
+                    <DataGrid
+                        x:Name="SubsetPointsDataGrid"
+                        Grid.Row="2"
+                        Margin="0,10,0,0"
+                        AlternatingRowBackground="WhiteSmoke"
+                        AutoGenerateColumns="False"
+                        BorderThickness="1,1,1,1"
+                        CanUserAddRows="False"
+                        CanUserDeleteRows="False"
+                        CanUserResizeColumns="True"
+                        FontSize="14"
+                        FontWeight="Normal"
+                        GridLinesVisibility="None"
+                        IsReadOnly="True"
+                        ItemsSource="{Binding}"
+                        MinRowHeight="30"
+                        ScrollViewer.CanContentScroll="True"
+                        ToolTip="All points category for all subsets.">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Width="*"
+                                Binding="{Binding Path=Subsets}"
+                                Header="Subsets"/>
+                            <DataGridTextColumn
+                                Width="*"
+                                Binding="{Binding Path=Limit}"
+                                CanUserSort="False"
+                                Header="Limit" />
+                            <DataGridTextColumn
+                                Width="*"
+                                Binding="{Binding Path=Closure}"
+                                CanUserSort="False"
+                                Header="Closure" />
+                            <DataGridTextColumn
+                                Width="*"
+                                Binding="{Binding Path=Interior}"
+                                CanUserSort="False"
+                                Header="Interior" />
+                            <DataGridTextColumn
+                                Width="*"
+                                Binding="{Binding Path=Exterior}"
+                                CanUserSort="False"
+                                Header="Exterior" />
+                            <DataGridTextColumn
+                                Width="*"
+                                Binding="{Binding Path=Boundary}"
+                                CanUserSort="False"
+                                Header="Boundary" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+
+            </TabItem>
+            <!--  Subsets Points Tab  -->
+
+            <!--  Points Tab  -->
+            <TabItem
+                Width="120"
+                Height="30"
+                VerticalAlignment="Top"
+                ToolTip="Find limit, interior, closure, boundary and exterior points.">
+
+                <TabItem.Header>
+                    <TextBlock
+                        FontSize="14"
+                        FontWeight="Bold"
+                        Foreground="#FFA2A2A2"
+                        Text="Points" />
+                </TabItem.Header>
+
+                <Grid Margin="40,10,40,5" IsSharedSizeScope="True">
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="0,20,0,15">
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="PointsLabel" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Label
+                            Grid.Column="0"
+                            Content="Points Set"
+                            FontSize="14"
+                            FontWeight="Medium" />
+
+                        <ComboBox
+                            Name="PointsTabPointsComboBox"
+                            Grid.Column="1"
+                            FontSize="14"
+                            ToolTip="Choice the points set.">
+                            <ComboBoxItem>Limit Points</ComboBoxItem>
+                            <ComboBoxItem>Closure Points</ComboBoxItem>
+                            <ComboBoxItem>Interior Points</ComboBoxItem>
+                            <ComboBoxItem>Exterior Points</ComboBoxItem>
+                            <ComboBoxItem>Boundary Points</ComboBoxItem>
+                        </ComboBox>
+
+                    </Grid>
+
+                    <Grid Grid.Row="1">
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="16*" SharedSizeGroup="PointsLabel" />
+                            <ColumnDefinition Width="133*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Label
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Content="Set"
+                            FontSize="14"
+                            FontWeight="Medium" />
+
+                        <AdornerDecorator
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            ToolTip="Enter set elements like a, b, c">
+                            <TextBox
+                                x:Name="PointsTabSetTextBox"
+                                VerticalContentAlignment="Center"
+                                FontSize="14">
+                                <infrastructure:WatermarkService.Watermark>
+                                    <TextBlock
+                                        Margin="4"
+                                        VerticalAlignment="Center"
+                                        FontSize="12">
+                                        Hint: a, b, c
+                                    </TextBlock>
+                                </infrastructure:WatermarkService.Watermark>
+                            </TextBox>
+                        </AdornerDecorator>
+
+                        <Label
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Content="Subset"
+                            FontSize="14"
+                            FontWeight="Medium" />
+
+                        <AdornerDecorator
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            ToolTip="Enter subset elements like a, b, c">
+                            <TextBox
+                                x:Name="PointsTabSubsetTextBox"
+                                VerticalContentAlignment="Center"
+                                FontSize="14">
+                                <infrastructure:WatermarkService.Watermark>
+                                    <TextBlock
+                                        Margin="4"
+                                        VerticalAlignment="Center"
+                                        FontSize="12">
+                                        Hint: a, b
+                                    </TextBlock>
+                                </infrastructure:WatermarkService.Watermark>
+                            </TextBox>
+                        </AdornerDecorator>
+
+                        <Label
+                            Grid.Row="2"
+                            Grid.Column="0"
+                            Content="Topology"
+                            FontSize="14"
+                            FontWeight="Medium" />
+
+                        <AdornerDecorator
+                            Grid.Row="2"
+                            Grid.Column="1"
+                            ToolTip="Enter set elements like {}, {a,b,c}, {a}, {b}, {a,b}">
+                            <TextBox
+                                x:Name="PointsTabTopologyTextBox"
+                                VerticalContentAlignment="Center"
+                                FontSize="14">
+                                <infrastructure:WatermarkService.Watermark>
+                                    <TextBlock
+                                        Margin="4"
+                                        VerticalAlignment="Center"
+                                        FontSize="12">
+                                        Hint: {}, {a,b,c}, {a}, {b}, {a,b}
+                                    </TextBlock>
+                                </infrastructure:WatermarkService.Watermark>
+                            </TextBox>
+                        </AdornerDecorator>
+
+                    </Grid>
+
                     <Grid Grid.Row="2">
+
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
                         <Grid Grid.Column="0">
+
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" SharedSizeGroup="PointsLabel" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
+
                             <Label
                                 Grid.Column="0"
                                 VerticalAlignment="Center"
                                 Content="Result"
                                 FontSize="15"
                                 FontWeight="Medium" />
+
                             <Border
                                 Grid.Column="1"
                                 MinWidth="200"
@@ -419,12 +611,14 @@
                                 BorderBrush="Gray"
                                 ToolTip="Result">
                                 <TextBlock
-                                    x:Name="PointsResult"
+                                    x:Name="PointsTabPointsResult"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     FontSize="14" />
                             </Border>
+
                         </Grid>
+
                         <StackPanel
                             Grid.Column="1"
                             Margin="0,5,0,5"
@@ -440,6 +634,7 @@
                                 Content="Find" />
                         </StackPanel>
                     </Grid>
+
                     <Border
                         Grid.Row="3"
                         Width="240"
@@ -449,20 +644,24 @@
                         BorderBrush="Gray"
                         BorderThickness="1"
                         CornerRadius="4">
-                        <TextBlock><Bold>Instruction:</Bold> 
-                            <LineBreak />- Enter the empty set (<Bold>Φ</Bold>) like <Bold>{}</Bold>.</TextBlock>
+                        <TextBlock>
+                            <Bold>Instruction:</Bold><LineBreak />
+                            - Enter the empty set (<Bold>Φ</Bold>) like <Bold>{}</Bold>.
+                        </TextBlock>
                     </Border>
+
                 </Grid>
 
             </TabItem>
-            <!--  End Find Points Tab  -->
+            <!--  End Points Tab  -->
 
-            <!--  Find Topologies Tab  -->
+            <!--  Power Set Tab  -->
             <TabItem
                 Width="120"
                 Height="30"
                 VerticalAlignment="Top"
-                ToolTip="Generate all topologies defined on a set.">
+                ToolTip="Generate the power set for a given set.">
+
                 <TabItem.Header>
                     <TextBlock
                         FontSize="14"
@@ -480,11 +679,13 @@
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="0" Margin="0,5,0,5">
+
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" SharedSizeGroup="PointsLabel" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+
                         <Label
                             Grid.Column="0"
                             Margin="0,0,4,0"
@@ -554,8 +755,7 @@
                 </Grid>
 
             </TabItem>
-            <!--  End Find Topologies Tab  -->
-
+            <!--  End Power Set Tab  -->
         </TabControl>
         <!--  End Tabs  -->
 
@@ -567,11 +767,15 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <Label Grid.Column="0" Foreground="#FFA2A2A2">Copyright &#169; 2019 | All Right Received - Mahmoud Shaheen.</Label>
+            <Label Grid.Column="0" Foreground="#FFA2A2A2">
+                Copyright &#169; 2019 | All Right Received - Mahmoud Shaheen.
+            </Label>
+
             <StackPanel
                 Grid.Column="1"
                 HorizontalAlignment="Center"
                 Orientation="Horizontal">
+
                 <Button
                     Margin="10,0,5,0"
                     Background="{x:Null}"
@@ -582,6 +786,7 @@
                     FontWeight="Bold"
                     Foreground="#FFA2A2A2"
                     ToolTip="https://linkedin.com/in/shaheenzx/" />
+
                 <Button
                     Margin="10,0,5,0"
                     Background="{x:Null}"
@@ -592,7 +797,9 @@
                     FontWeight="Bold"
                     Foreground="#FFA2A2A2"
                     ToolTip="https://github.com/shaheenzx" />
+
             </StackPanel>
+
         </Grid>
         <!--  End Footer  -->
 
