@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using Microsoft.Win32;
 using Excel = Microsoft.Office.Interop.Excel;
 using static Topology.Infra.ParseUtl;
 using static Topology.Infra.TopologyUtl;
@@ -18,6 +19,8 @@ namespace Topology.GUI
     // ReSharper disable once RedundantExtendsListEntry
     public partial class MainWindow : Window
     {
+        private readonly HashSet<string> _topologies;
+
         private CancellationTokenSource _cancelToken;
         
         private Progress<double> _progressOperation;
@@ -26,6 +29,8 @@ namespace Topology.GUI
         {
             InitializeComponent();
             TopologyTabCancelBtn.IsEnabled = false;
+            SaveToExcelBtn.IsEnabled = false;
+            _topologies = new HashSet<string>();
         }
 
         #region Tabs
@@ -37,6 +42,7 @@ namespace Topology.GUI
             var set = StringToSet(TopologyTabSetTextBox.Text);
 
             var sort = TopologyTabSortCheckBox.IsChecked != null && TopologyTabSortCheckBox.IsChecked != false;
+
             if (sort && set.Count > 4)
             {
                 MessageBox.Show("I can not sort topologies defined on a set has element > 4 it cost a lot of time!", "Error");
@@ -45,7 +51,7 @@ namespace Topology.GUI
 
             _cancelToken = new CancellationTokenSource();
             GenerateTopologiesBtn.IsEnabled = false;
-            ToExcelBtn.IsEnabled = false;
+            SaveToExcelBtn.IsEnabled = false;
             TopologyTabCancelBtn.IsEnabled = true;
 
             _progressOperation = new Progress<double>(value => TopologyTabProcessBar.Value = value);
@@ -65,7 +71,7 @@ namespace Topology.GUI
 
                     var counter = 0;
                     foreach (var topology in topologies)
-                        TopologiesDataGrid.Items.Add(new ItemData
+                        TopologiesDataGrid.Items.Add(new TopologyItemData
                             {Index = ++counter, Topology = SetToString(topology)});
                 }
                 else
@@ -87,18 +93,18 @@ namespace Topology.GUI
             {
                 _cancelToken.Dispose();
                 GenerateTopologiesBtn.IsEnabled = true;
-                ToExcelBtn.IsEnabled = true;
+                SaveToExcelBtn.IsEnabled = true;
                 TopologyTabCancelBtn.IsEnabled = false;
                 TopologyTabProcessBar.Visibility = Visibility.Hidden;
             }
         }
 
-        public async Task<HashSet<HashSet<HashSet<T>>>> TopologiesToDataGridAsync<T>(HashSet<T> set, CancellationToken ct, IProgress<double> progress)
+        private async Task TopologiesToDataGridAsync(HashSet<string> set, CancellationToken ct,
+            IProgress<double> progress)
         {
             // if > 6 will case overflow in the long type.
             if (set.Count > 5) throw new Exception("Set elements must be less than 6 elements.");
 
-            var topologies = new HashSet<HashSet<HashSet<T>>>();
             progress.Report(0);
 
             await Task.Run(() =>
@@ -124,7 +130,7 @@ namespace Topology.GUI
                         progress.Report((double)p);
                     }
 
-                    var subset = new HashSet<HashSet<T>>();
+                    var subset = new HashSet<HashSet<string>>();
 
                     // loop though every element in the set and determine with number 
                     // should present in the current subset.
@@ -134,46 +140,46 @@ namespace Topology.GUI
                         if (((1L << j++) & i) > 0)
                             subset.Add(e);
 
-                    subset.Add(new HashSet<T>());
+                    subset.Add(new HashSet<string>());
                     subset.Add(set);
 
                     if (IsTopology(subset, set))
                     {
+                        var s = SetToString(subset);
+                        _topologies.Add(s);
                         this.Dispatcher?.Invoke(delegate
                             {
-                                TopologiesDataGrid.Items.Add(new ItemData
-                                    {Index = ++counter, Topology = SetToString(subset)});
+                                TopologiesDataGrid.Items.Add(new TopologyItemData
+                                    {Index = ++counter, Topology = s});
                             }
                         );
                     }
                 }
             }, ct);
 
-            return topologies;
-
+            progress.Report(0);
         }
 
-        private async void GenerateToExcelBtn_Click(object sender, RoutedEventArgs e)
-        {
-            var set = StringToSet(TopologyTabSetTextBox.Text);
-            var sort = TopologyTabSortCheckBox.IsChecked != null && TopologyTabSortCheckBox.IsChecked != false;
+        #region To Excel
 
-            if (sort && set.Count > 4)
-            {
-                MessageBox.Show("I can not sort topologies defined on a set that has greater than 4 elements. It cost a lot of time!", "Error");
-                return;
-            }
+        private async void SaveToExcelBtn_Click(object sender, RoutedEventArgs e)
+        {
 
             _cancelToken = new CancellationTokenSource();
+
             GenerateTopologiesBtn.IsEnabled = false;
-            ToExcelBtn.IsEnabled = false;
+            SaveToExcelBtn.IsEnabled = false;
             TopologyTabCancelBtn.IsEnabled = true;
 
-            TopologyTabStatusTxt.Text = "Generating...";
+            _progressOperation = new Progress<double>(value => TopologyTabProcessBar.Value = value);
+
+            TopologyTabProcessBar.Visibility = Visibility.Visible;
+
+            TopologyTabStatusTxt.Text = "Exporting...";
 
             try
             {
-                await Task.Run(() => TopologiesToExcel(set, _cancelToken.Token, sort));
+                await Task.Run(() => ExportTopologiesDataGridToExcel(_cancelToken.Token, _progressOperation));
                 TopologyTabStatusTxt.Text ="Operation Completed.";
             }
             catch (OperationCanceledException ex)
@@ -182,20 +188,160 @@ namespace Topology.GUI
             }
             catch (Exception ex)
             {
-                TopologyTabStatusTxt.Text = "Operation Cancelled | " + ex.Message;
+                TopologyTabStatusTxt.Text = "Error! Operation Cancelled | " + ex.Message;
             }
             finally
             {
                 _cancelToken.Dispose();
                 GenerateTopologiesBtn.IsEnabled = true;
-                ToExcelBtn.IsEnabled = true;
+                SaveToExcelBtn.IsEnabled = false;
                 TopologyTabCancelBtn.IsEnabled = false;
+                TopologyTabProcessBar.Visibility = Visibility.Hidden;
             }
         }
+
+        public void ExportTopologiesDataGridToExcel(CancellationToken ct, IProgress<double> progress)
+        {
+            try
+            {
+                progress.Report(0);
+
+                var sfd = new SaveFileDialog
+                {
+                    Filter = "Excel Documents (*.xlsx)|*.xlsx",
+                    FileName = "Topologies.xlsx"
+                };
+
+                if (sfd.ShowDialog() != true) return;
+
+                // Start Excel and get Application object.
+                var excelApp = new Excel.Application {Visible = false, DisplayAlerts = false};
+
+                var workbook = excelApp.Workbooks.Add();
+                var sheet = (Excel._Worksheet) excelApp.ActiveSheet;
+
+                // changing the name of active sheet  
+                sheet.Name = "Exported Topologies";
+
+                // Add table headers.
+                sheet.Cells[1, "A"] = "Number";
+                sheet.Cells[1, "B"] = "Topologies";
+
+                // fill table rows.
+                var x = 2;
+                var n = _topologies.Count;
+                foreach (var topology in _topologies)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    progress.Report((double) (x - 1) / n * 100);
+                    sheet.Cells[x, "A"] = x - 1;
+                    sheet.Cells[x, "B"] = topology;
+                    x++;
+                }
+
+                // AutoFit columns A:B
+                var range = sheet.Range["A1", "B1"];
+                range.EntireColumn.AutoFit();
+
+                // Give our table data a nice look and feel.
+                range = sheet.Range["A1"];
+                range.AutoFormat(Excel.XlRangeAutoFormat.xlRangeAutoFormatClassic2);
+
+                // Format A1:D1 as bold, V/H alignment = center
+                range = sheet.Range["A1", "B1"];
+                range.Font.Bold = true;
+                // range.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+                range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+
+                // Make sure Excel is visible and give the user control
+                // of Microsoft Excel's lifetime.
+                // excelApp.Visible = true;
+                // excelApp.UserControl = true;
+
+                // save the application  
+                workbook.SaveAs(sfd.FileName);
+
+                excelApp.Quit();
+
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show($"Error: {e.Message} | {e.Source}", "Error!");
+            }
+            finally
+            {
+                progress.Report(0);
+            }
+        }
+
+        private static int CompareSetByLength<T>(HashSet<T> x, HashSet<T> y)
+        {
+            // If x is not null and y is null, x is greater.
+            // If x is not null and y is not null, compare the lengths of the two strings.
+            if (x != null) return y == null ? 1 : x.Count.CompareTo(y.Count);
+
+            // If x is null and y is null, they're equal. 
+            if (y == null) return 0;
+
+            // If x is null and y is not null, y is greater. 
+            return -1;
+        }
+
+        #endregion
 
         private void CancelBtn_OnClick(object sender, RoutedEventArgs e)
         {
             _cancelToken.Cancel();
+        }
+
+        #endregion
+
+        #region SubsetsPoints
+
+        private void FindSubsetsPointsBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var setBox = SubsetPointsTabSetTextBox.Text;
+            if (setBox.Length == 0)
+            {
+                MessageBox.Show("Please fill the set field.", "Required Field!");
+                return;
+            }
+
+            var tBox = SubsetPointsTabTopologyTextBox.Text;
+            if (tBox.Length == 0)
+            {
+                MessageBox.Show("Please fill the topology field.", "Required Field!");
+                return;
+            }
+
+            var set = StringToSet(setBox);
+            var t = StringToSetOfSets(tBox);
+
+            var powerSet = PowerSet(set);
+
+            try
+            {
+                foreach (var subset in powerSet)
+                {
+                    SubsetPointsDataGrid.Items.Add(new SubsetPointsItemData
+                    {
+                        Subset = SetToString(subset),
+                        Limit = SetToString(LimitPoints(set, subset, t)),
+                        Closure = SetToString(ClosurePoints(set, subset, t)),
+                        Interior = SetToString(InteriorPoints(set, subset, t)),
+                        Exterior = SetToString(ExteriorPoints(set, subset, t)),
+                        Boundary = SetToString(BoundaryPoints(set, subset, t))
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", "Error!");
+            }
         }
 
         #endregion
@@ -335,107 +481,21 @@ namespace Topology.GUI
         #endregion
 
         #endregion
-
-        #region To Excel
-
-        public static void TopologiesToExcel<T>(HashSet<T> set, CancellationToken ct, bool sort = false)
-        {
-            try
-            {
-                // Just for force the method to check the assertions and
-                // throw any exception before open the excel
-                var _ = Topologies(set).FirstOrDefault();
-
-                // Start Excel and get Application object.
-                var excelApp = new Excel.Application {Visible = true};
-                excelApp.Workbooks.Add();
-                var sheet = (Excel._Worksheet) excelApp.ActiveSheet;
-        
-                // Add table headers going cell by cell.
-                sheet.Cells[1, "A"] = "Number";
-                sheet.Cells[1, "B"] = "Topologies";
-
-                if (sort)
-                {  
-                    var sortedTopologies = Topologies(set).ToList();
-                    sortedTopologies.Sort(CompareSetByLength);
-
-                    var i = 2;
-                    foreach (var topology in sortedTopologies)
-                    {
-                        ct.ThrowIfCancellationRequested();
-                        sheet.Cells[i, "A"] = i - 1;
-                        sheet.Cells[i, "B"] = SetToString(topology);
-                        i++;
-                    }
-                }
-                else
-                {
-                    var i = 2;
-                    foreach (var topology in Topologies(set))
-                    {
-                        ct.ThrowIfCancellationRequested();
-                        sheet.Cells[i, "A"] = i - 1;
-                        sheet.Cells[i, "B"] = SetToString(topology);
-                        i++;
-                    }
-                }
-
-                // AutoFit columns A:B
-                var range = sheet.Range["A1", "B1"];
-                range.EntireColumn.AutoFit();
-
-                // Give our table data a nice look and feel.
-                range = sheet.Range["A1"];
-                range.AutoFormat(Excel.XlRangeAutoFormat.xlRangeAutoFormatClassic2);
-
-                // Format A1:D1 as bold, V/H alignment = center
-                range = sheet.Range["A1", "B1"];
-                range.Font.Bold = true;
-                // range.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
-                range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
-
-                // Make sure Excel is visible and give the user control
-                // of Microsoft Excel's lifetime.
-                excelApp.Visible = true;
-                excelApp.UserControl = true;
-        
-                excelApp.Quit();
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show($"Error: {e.Message} | {e.Source}", "Error!");
-            }
-        }
-
-        private static int CompareSetByLength<T>(HashSet<T> x, HashSet<T> y)
-        {
-            // If x is not null and y is null, x is greater.
-            // If x is not null and y is not null, compare the lengths of the two strings.
-            if (x != null) return y == null ? 1 : x.Count.CompareTo(y.Count);
-
-            // If x is null and y is null, they're equal. 
-            if (y == null) return 0;
-
-            // If x is null and y is not null, y is greater. 
-            return -1;
-        }
-
-        #endregion
-
-        private void FindSubsetsPointsBtn_Click(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
     }
 
-    class ItemData
+    class TopologyItemData
     {
         public int Index { get; set; }
         public string Topology { get; set; }
+    }
+
+    class SubsetPointsItemData
+    {
+        public string Subset { get; set; }
+        public string Limit { get; set; }
+        public string Closure { get; set; }
+        public string Interior { get; set; }
+        public string Exterior { get; set; }
+        public string Boundary { get; set; }
     }
 }

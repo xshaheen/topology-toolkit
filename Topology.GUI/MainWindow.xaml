@@ -117,7 +117,7 @@
             </TabControl.Resources>
             <!--  End Tab Style  -->
 
-            <!-- Topologies Tab  -->
+            <!--  Topologies Tab  -->
             <TabItem
                 Width="120"
                 Height="30"
@@ -223,14 +223,19 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <CheckBox
-                            x:Name="TopologyTabSortCheckBox"
+                        <StackPanel
                             Grid.Column="0"
-                            Margin="5,10"
-                            VerticalAlignment="Center"
-                            Content="Sort by length."
-                            FontSize="15"
-                            ToolTip="Sort the topologies in increasing order by the length." />
+                            Margin="0,5,0,5"
+                            HorizontalAlignment="Left"
+                            Orientation="Horizontal">
+                            <CheckBox
+                                x:Name="TopologyTabSortCheckBox"
+                                Margin="5,10"
+                                VerticalAlignment="Center"
+                                Content="Sort by length."
+                                FontSize="14"
+                                ToolTip="Sort the topologies in increasing order by the length." />
+                        </StackPanel>
 
                         <StackPanel
                             Grid.Column="1"
@@ -246,16 +251,6 @@
                                 Visibility="Hidden" />
 
                             <Button
-                                Name="ToExcelBtn"
-                                Width="110"
-                                Height="40"
-                                Margin="5,4,4,5"
-                                Padding="4,2"
-                                Click="GenerateToExcelBtn_Click"
-                                Content="Generate To Excel"
-                                ToolTip="Generate or Export the topologies to Excel file." />
-
-                            <Button
                                 Name="GenerateTopologiesBtn"
                                 Width="70"
                                 Height="40"
@@ -263,6 +258,16 @@
                                 Padding="4,2"
                                 Click="GenerateTopologiesBtn_Click"
                                 Content="Generate" />
+
+                            <Button
+                                x:Name="SaveToExcelBtn"
+                                Width="70"
+                                Height="40"
+                                Margin="5,4,4,5"
+                                Padding="4,2"
+                                Click="SaveToExcelBtn_Click"
+                                Content="Save"
+                                ToolTip="Save topologies to Excel file." />
 
                             <Button
                                 Name="TopologyTabCancelBtn"
@@ -273,6 +278,7 @@
                                 Click="CancelBtn_OnClick"
                                 Content="Cancel"
                                 ToolTip="Cancel the process." />
+
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -349,7 +355,7 @@
 
                     <Grid Grid.Row="1" Margin="0,5,0,5">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="PointsLabel" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="SubsetPointsLabel" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
@@ -379,7 +385,7 @@
                                 </infrastructure:WatermarkService.Watermark>
                             </TextBox>
                         </AdornerDecorator>
-                        
+
                     </Grid>
 
                     <DataGrid
@@ -403,8 +409,8 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn
                                 Width="*"
-                                Binding="{Binding Path=Subsets}"
-                                Header="Subsets"/>
+                                Binding="{Binding Path=Subset}"
+                                Header="Subsets" />
                             <DataGridTextColumn
                                 Width="*"
                                 Binding="{Binding Path=Limit}"
