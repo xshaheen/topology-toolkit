@@ -408,6 +408,11 @@
                         ToolTip="All points category for all subsets.">
                         <DataGrid.Columns>
                             <DataGridTextColumn
+                                Width="Auto"
+                                MinWidth="40"
+                                Binding="{Binding Path=Index}"
+                                Header="N" />
+                            <DataGridTextColumn
                                 Width="*"
                                 Binding="{Binding Path=Subset}"
                                 Header="Subsets" />

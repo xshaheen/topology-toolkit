@@ -304,6 +304,8 @@ namespace Topology.GUI
 
         private void FindSubsetsPointsBtn_Click(object sender, RoutedEventArgs e)
         {
+            SubsetPointsDataGrid.Items.Clear();
+
             var setBox = SubsetPointsTabSetTextBox.Text;
             if (setBox.Length == 0)
             {
@@ -325,10 +327,12 @@ namespace Topology.GUI
 
             try
             {
+                var i = 0;
                 foreach (var subset in powerSet)
                 {
                     SubsetPointsDataGrid.Items.Add(new SubsetPointsItemData
                     {
+                        Index = ++i,
                         Subset = SetToString(subset),
                         Limit = SetToString(LimitPoints(set, subset, t)),
                         Closure = SetToString(ClosurePoints(set, subset, t)),
@@ -491,6 +495,7 @@ namespace Topology.GUI
 
     class SubsetPointsItemData
     {
+        public int Index { get; set; }
         public string Subset { get; set; }
         public string Limit { get; set; }
         public string Closure { get; set; }
