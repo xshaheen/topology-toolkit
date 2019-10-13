@@ -1,13 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using Microsoft.Win32;
-using Excel = Microsoft.Office.Interop.Excel;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using static Topology.Infra.ParseUtl;
 using static Topology.Infra.TopologyUtl;
 
@@ -16,7 +21,6 @@ namespace Topology.GUI
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    // ReSharper disable once RedundantExtendsListEntry
     public partial class MainWindow : Window
     {
         private readonly HashSet<string> _topologies;
@@ -28,8 +32,12 @@ namespace Topology.GUI
         public MainWindow()
         {
             InitializeComponent();
+            this.Closing += MainWindow_Closing;
+            TabsControl.MouseDown += MainWindows_ButtonX;
+
             TopologyTabCancelBtn.IsEnabled = false;
             SaveToExcelBtn.IsEnabled = false;
+
             _topologies = new HashSet<string>();
         }
 
@@ -69,10 +77,15 @@ namespace Topology.GUI
                     var topologies = Topologies(set).ToList();
                     topologies.Sort(CompareSetByLength);
 
-                    var counter = 0;
-                    foreach (var topology in topologies)
-                        TopologiesDataGrid.Items.Add(new TopologyItemData
-                            {Index = ++counter, Topology = SetToString(topology)});
+                    _topologies.Clear();
+
+                    var n = topologies.Count;
+                    for (var i = 0; i < n;)
+                    {
+                        var topology = SetToString(topologies[i]);
+                        _topologies.Add(topology);
+                        TopologiesDataGrid.Items.Add(new TopologyItemData {Index = ++i, Topology = topology});
+                    }
                 }
                 else
                 {
@@ -106,6 +119,8 @@ namespace Topology.GUI
             if (set.Count > 5) throw new Exception("Set elements must be less than 6 elements.");
 
             progress.Report(0);
+
+            _topologies.Clear();
 
             await Task.Run(() =>
             {
@@ -214,18 +229,16 @@ namespace Topology.GUI
 
                 if (sfd.ShowDialog() != true) return;
 
-                // Start Excel and get Application object.
-                var excelApp = new Excel.Application {Visible = false, DisplayAlerts = false};
 
-                var workbook = excelApp.Workbooks.Add();
-                var sheet = (Excel._Worksheet) excelApp.ActiveSheet;
+                //Creates a blank workbook.
+                using var p = new ExcelPackage();
 
-                // changing the name of active sheet  
-                sheet.Name = "Exported Topologies";
+                //A workbook must have at least on cell, so lets add one... 
+                var sheet = p.Workbook.Worksheets.Add("Exported Topologies Sheet");
 
-                // Add table headers.
-                sheet.Cells[1, "A"] = "Number";
-                sheet.Cells[1, "B"] = "Topologies";
+                // fill Header
+                sheet.Cells[1, 1].Value = "N";
+                sheet.Cells[1, 2].Value = "Topologies";
 
                 // fill table rows.
                 var x = 2;
@@ -234,35 +247,26 @@ namespace Topology.GUI
                 {
                     ct.ThrowIfCancellationRequested();
                     progress.Report((double) (x - 1) / n * 100);
-                    sheet.Cells[x, "A"] = x - 1;
-                    sheet.Cells[x, "B"] = topology;
+
+                    sheet.Cells[x, 1].Value = x - 1;
+                    sheet.Cells[x, 2].Value = topology;
                     x++;
                 }
 
-                // AutoFit columns A:B
-                var range = sheet.Range["A1", "B1"];
-                range.EntireColumn.AutoFit();
+                // style header
+                sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
 
-                // Give our table data a nice look and feel.
-                range = sheet.Range["A1"];
-                range.AutoFormat(Excel.XlRangeAutoFormat.xlRangeAutoFormatClassic2);
+                using var range = sheet.Cells[1, 1, 1, 2];
+                range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                range.Style.Font.Bold = true;
+                range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                range.Style.Fill.BackgroundColor.SetColor(Color.RoyalBlue);
+                range.Style.Font.Color.SetColor(Color.White);
 
-                // Format A1:D1 as bold, V/H alignment = center
-                range = sheet.Range["A1", "B1"];
-                range.Font.Bold = true;
-                // range.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
-                range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
-
-                // Make sure Excel is visible and give the user control
-                // of Microsoft Excel's lifetime.
-                // excelApp.Visible = true;
-                // excelApp.UserControl = true;
-
-                // save the application  
-                workbook.SaveAs(sfd.FileName);
-
-                excelApp.Quit();
-
+                // using var range2 = sheet.Cells[1, 1];
+                
+                //Save the new workbook.
+                p.SaveAs(new FileInfo(sfd.FileName));
             }
             catch (OperationCanceledException)
             {
@@ -485,15 +489,52 @@ namespace Topology.GUI
         #endregion
 
         #endregion
+
+        #region Close
+
+        private static void MainWindow_Closing(object sender, CancelEventArgs e)
+        {
+            // See if the user really wants to shut down this window.
+            const string msg = "Do you want to close without saving?";
+            var result = MessageBox.Show(msg, "Are You Sure?", 
+                MessageBoxButton.YesNo, MessageBoxImage.Warning);
+	
+            if (result == MessageBoxResult.No)
+                // If user doesn't want to close, cancel closure.
+                e.Cancel = true;
+        }
+
+        #endregion
+
+        #region Handle Keys
+
+        // Handle Mouse previous button and next button
+        private void MainWindows_ButtonX(object sender, MouseEventArgs e)
+        {
+            if (e.XButton1 == MouseButtonState.Pressed)
+            {
+                TabsControl.SelectedItem = 
+                    TabsControl.Items[(TabsControl.SelectedIndex + 1) % TabsControl.Items.Count];
+            }
+
+            if (e.XButton2 == MouseButtonState.Pressed)
+            {
+                var totalTabs = TabsControl.Items.Count;
+                TabsControl.SelectedItem = 
+                    TabsControl.Items[(TabsControl.SelectedIndex - 1 + totalTabs ) % totalTabs];
+            }
+        }
+
+        #endregion
     }
 
-    class TopologyItemData
+    internal class TopologyItemData
     {
         public int Index { get; set; }
         public string Topology { get; set; }
     }
 
-    class SubsetPointsItemData
+    internal class SubsetPointsItemData
     {
         public int Index { get; set; }
         public string Subset { get; set; }
