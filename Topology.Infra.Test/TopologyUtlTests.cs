@@ -32,46 +32,6 @@ namespace Topology.Infra.Test
         #endregion
 
         [Fact]
-        public void Can_Determine_Valid_Topology()
-        {
-            // Arrange
-            var set = new HashSet<char> {'a', 'b', 'c'};
-            var t = new HashSet<HashSet<char>>
-            {
-                new HashSet<char>(),
-                new HashSet<char> {'a', 'b', 'c'},
-                new HashSet<char> {'a'},
-                new HashSet<char> {'b'},
-                new HashSet<char> {'a', 'b'},
-            };
-
-            // Act
-            var result = TopologyUtl.IsTopology(t, set);
-
-            // Assert
-            Assert.True(result);
-        }
-
-        [Fact]
-        public void Can_Determine_Invalid_Topology()
-        {
-            // Arrange
-            var set = new HashSet<char> {'a', 'b', 'c'};
-            var t = new HashSet<HashSet<char>>
-            {
-                new HashSet<char> {'a', 'b', 'c'},
-                new HashSet<char> {'a'},
-                new HashSet<char> {'b'},
-            };
-
-            // Act
-            var result = TopologyUtl.IsTopology(t, set);
-
-            // Assert
-            Assert.False(result);
-        }
-
-        [Fact]
         public void Can_Generate_PowerSet()
         {
             // Arrange
@@ -124,6 +84,46 @@ namespace Topology.Infra.Test
             Assert.Equal(set, result2, _setComparer);
             // Assert - can generate the closure for the set itself.
             Assert.Equal(subset2, result3, _setComparer);
+        }
+
+        [Fact]
+        public void Can_Determine_Valid_Topology()
+        {
+            // Arrange
+            var set = new HashSet<char> {'a', 'b', 'c'};
+            var t = new HashSet<HashSet<char>>
+            {
+                new HashSet<char>(),
+                new HashSet<char> {'a', 'b', 'c'},
+                new HashSet<char> {'a'},
+                new HashSet<char> {'b'},
+                new HashSet<char> {'a', 'b'},
+            };
+
+            // Act
+            var result = TopologyUtl.IsTopology(t, set);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void Can_Determine_Invalid_Topology()
+        {
+            // Arrange
+            var set = new HashSet<char> {'a', 'b', 'c'};
+            var t = new HashSet<HashSet<char>>
+            {
+                new HashSet<char> {'a', 'b', 'c'},
+                new HashSet<char> {'a'},
+                new HashSet<char> {'b'},
+            };
+
+            // Act
+            var result = TopologyUtl.IsTopology(t, set);
+
+            // Assert
+            Assert.False(result);
         }
 
         [Fact]
@@ -478,6 +478,35 @@ namespace Topology.Infra.Test
 
             // Assert
             Assert.Equal(expected, result, _setComparer);
+        }
+
+        [Fact]
+        public void Can_Find_NeighbourhoodSystem()
+        {
+            // Arrange
+            var set = new HashSet<char>{'a', 'b', 'c', 'd', 'e'};
+            var t = new HashSet<HashSet<char>>
+            {
+                new HashSet<char>(),
+                new HashSet<char>{'a'},
+                new HashSet<char>{'a', 'b'},
+                new HashSet<char>{'a', 'c', 'd'},
+                new HashSet<char>{'a', 'b', 'c', 'd'},
+                new HashSet<char>{'a', 'b', 'c', 'd', 'e'},
+            };
+
+            // Act
+            var result = TopologyUtl.NeighbourhoodSystem(set, t, 'c');
+
+            // Assert
+            Assert.Equal(new HashSet<HashSet<char>>
+            {
+                new HashSet<char>{'a', 'c', 'd'},
+                new HashSet<char>{'a', 'b', 'c', 'd'},
+                new HashSet<char>{'a', 'c', 'd', 'e'},
+                new HashSet<char>{'a', 'b', 'c', 'd', 'e'},
+            }, result, _setComparer);
+
         }
     }
 }
