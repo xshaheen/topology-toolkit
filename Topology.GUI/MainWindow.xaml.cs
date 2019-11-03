@@ -21,7 +21,7 @@ namespace Topology.GUI
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow
     {
         private readonly HashSet<string> _topologies;
 
@@ -32,6 +32,7 @@ namespace Topology.GUI
         public MainWindow()
         {
             InitializeComponent();
+
             this.Closing += MainWindow_Closing;
             TabsControl.MouseDown += MainWindows_ButtonX;
 
@@ -49,7 +50,14 @@ namespace Topology.GUI
         {
             var set = StringToSet(TopologyTabSetTextBox.Text);
 
-            var sort = TopologyTabSortCheckBox.IsChecked != null && TopologyTabSortCheckBox.IsChecked != false;
+            if (set.Count == 0)
+            {
+                MessageBox.Show("Please Enter the set elements!",
+                    "Required Fields");
+                return;
+            }
+
+            var sort = TopologyTabSortCheckBox.IsChecked == true;
 
             if (sort && set.Count > 4)
             {
@@ -84,7 +92,7 @@ namespace Topology.GUI
                     {
                         var topology = SetToString(topologies[i]);
                         _topologies.Add(topology);
-                        TopologiesDataGrid.Items.Add(new TopologyItemData {Index = ++i, Topology = topology});
+                        TopologiesDataGrid.Items.Add(new {Index = ++i, Topology = topology});
                     }
                 }
                 else
@@ -116,7 +124,8 @@ namespace Topology.GUI
             IProgress<double> progress)
         {
             // if > 6 will case overflow in the long type.
-            if (set.Count > 5) throw new Exception("Set elements must be less than 6 elements.");
+            if (set.Count > 5) 
+                throw new Exception("Set elements must be less than 6 elements.");
 
             progress.Report(0);
 
@@ -342,7 +351,8 @@ namespace Topology.GUI
                         Closure = SetToString(ClosurePoints(set, subset, t)),
                         Interior = SetToString(InteriorPoints(set, subset, t)),
                         Exterior = SetToString(ExteriorPoints(set, subset, t)),
-                        Boundary = SetToString(BoundaryPoints(set, subset, t))
+                        Boundary = SetToString(BoundaryPoints(set, subset, t)),
+                        Accuracy = Accuracy(set, subset, t),
                     });
                 }
             }
@@ -411,6 +421,53 @@ namespace Topology.GUI
                 MessageBox.Show($"Error: {ex.Message}", "Error!");
             }
 
+        }
+
+        #endregion
+
+        #region Neighbourhood
+
+        private void GenerateNeighbourhoodBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var setBox = NeighbourhoodTabSetTextBox.Text;
+            if (setBox.Length == 0)
+            {
+                MessageBox.Show("Please fill the set field.", "Required Field!");
+                return;
+            }
+
+            var pointBox = NeighbourhoodTabPointTextBox.Text;
+            if (pointBox.Length == 0)
+            {
+                MessageBox.Show("Please fill the point field.", "Required Field!");
+                return;
+            }
+
+            var topologyBox = NeighbourhoodTabTopologyTextBox.Text;
+            if (topologyBox.Length == 0)
+            {
+                MessageBox.Show("Please fill the topology field.", "Required Field!");
+                return;
+            }
+
+            var set = StringToSet(setBox);
+            var point = pointBox;
+            var topology = StringToSetOfSets(topologyBox);
+
+            NeighbourhoodDataGrid.Items.Clear();
+            var counter = 0;
+
+            try
+            {
+                foreach (var s in NeighbourhoodSystem(set, topology, point))
+                    NeighbourhoodDataGrid.Items.Add(new NeighbourhoodItemData 
+                        {Index = ++counter, Neighbourhood = SetToString(s)});
+            }
+            catch (Exception exception)
+            {
+                MessageBox.Show($"Error: {exception.Message}", "Error!");
+                throw;
+            }
         }
 
         #endregion
@@ -534,6 +591,12 @@ namespace Topology.GUI
         public string Topology { get; set; }
     }
 
+    internal class NeighbourhoodItemData
+    {
+        public int Index { get; set; }
+        public string Neighbourhood { get; set; }
+    }
+
     internal class SubsetPointsItemData
     {
         public int Index { get; set; }
@@ -543,5 +606,6 @@ namespace Topology.GUI
         public string Interior { get; set; }
         public string Exterior { get; set; }
         public string Boundary { get; set; }
+        public double Accuracy { get; set; }
     }
 }

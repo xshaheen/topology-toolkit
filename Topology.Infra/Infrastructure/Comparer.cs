@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Topology.Infra
+namespace Topology.Infra.Infrastructure
 {
     public class Comparer
     {
@@ -15,14 +15,8 @@ namespace Topology.Infra
 
         public Comparer(Func<T, T, bool> func) { _comparisonFunc = func; }
 
-        public bool Equals(T x, T y)
-        {
-            return _comparisonFunc(x, y);
-        }
+        public bool Equals(T x, T y) => _comparisonFunc(x, y);
 
-        public int GetHashCode(T obj)
-        {
-            return obj.GetHashCode();
-        }
+        public int GetHashCode(T obj) => obj.GetHashCode();
     }
 }

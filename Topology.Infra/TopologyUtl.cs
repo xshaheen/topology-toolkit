@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Topology.Infra.Infrastructure;
 
 namespace Topology.Infra
 {
@@ -10,54 +11,6 @@ namespace Topology.Infra
     /// </summary>
     public class TopologyUtl
     {
-        /// <summary>
-        /// Converts the set to printable string.
-        /// </summary>
-        /// <typeparam name="T">Type of set elements.</typeparam>
-        /// <param name="set">The set to convert to string</param>
-        /// <returns>Printable string represent the set.</returns>
-        public static string SetToString<T>(HashSet<T> set)
-        {
-            var sb = new StringBuilder("{");
-
-            if (set != null)
-            {
-                foreach (var e in set) sb.Append(e + ", ");
-
-                var len = sb.Length;
-                // remove the extra ", "
-                if (len > 1) sb.Remove(len - 2, 2);
-            }
-
-            sb.Append("}");
-
-            return sb.ToString();
-        }
-
-        /// <summary>
-        /// Converts the set to printable string.
-        /// </summary>
-        /// <typeparam name="T">Type of set elements.</typeparam>
-        /// <param name="set">The set to convert to string</param>
-        /// <returns>Printable string represent the set.</returns>
-        public static string SetToString<T>(HashSet<HashSet<T>> set)
-        {
-            var sb = new StringBuilder("{ ");
-
-            if (set != null)
-            {
-                foreach (var e in set) sb.Append(SetToString(e) + ", ");
-
-                // remove the extra ", "
-                var len = sb.Length;
-                if (len > 1) sb.Remove(len - 2, 2);
-            }
-
-            sb.Append(" }");
-
-            return sb.ToString();
-        }
-
         /// <summary>
         /// Generates the power set of the given set in O(2^set.length).
         /// </summary>
@@ -375,6 +328,13 @@ namespace Topology.Infra
             closurePoints.ExceptWith(InteriorPoints(set, subset, t));
             return closurePoints;
         }
+
+        /// <summary>
+        /// Calculate the Accuracy (the number of interior points divided by number of
+        /// closure points.
+        /// </summary>
+        public static double Accuracy<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t) 
+            => (double) InteriorPoints(set, subset, t).Count / ClosurePoints(set, subset, t).Count;
 
         /// <summary>
         /// Find the neighbourhood for point in the <paramref name="set"/> for a given topology.
