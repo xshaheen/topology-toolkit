@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29324.140
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topology.CLI", "Topology.CLI\Topology.CLI.csproj", "{FCDE38F5-1EFA-4D17-8918-B82583A7B677}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CLI", "CLI\CLI.csproj", "{FCDE38F5-1EFA-4D17-8918-B82583A7B677}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topology.Infra.Test", "Topology.Infra.Test\Topology.Infra.Test.csproj", "{A0EAD465-138F-487A-896E-2EBFBC25912B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infra.Test", "Infra.Test\Infra.Test.csproj", "{A0EAD465-138F-487A-896E-2EBFBC25912B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topology.GUI", "Topology.GUI\Topology.GUI.csproj", "{4B1B6EFC-9636-41A4-8A00-BA88614757A1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GUI", "GUI\GUI.csproj", "{4B1B6EFC-9636-41A4-8A00-BA88614757A1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Topology.Infra", "Topology.Infra\Topology.Infra.csproj", "{4E32A992-0335-451C-B702-611D9F8DF9FC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infra", "Infra\Infra.csproj", "{4E32A992-0335-451C-B702-611D9F8DF9FC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

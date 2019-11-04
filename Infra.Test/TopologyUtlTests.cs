@@ -1,17 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Infra.Infra;
 using Xunit;
 
-namespace Topology.Infra.Test
+namespace Infra.Test
 {
     public class TopologyUtlTests
     {
         #region Comparer
 
-        private readonly Comparer<HashSet<char>> _setComparer = Comparer.GetIEqualityComparer
+        private readonly Infra.Comparer<HashSet<char>> _setComparer = Infra.Comparer.GetIEqualityComparer
             ((HashSet<char> x, HashSet<char> y) => x.SetEquals(y));
 
-        private readonly Comparer<HashSet<HashSet<char>>> _setOfSetComparer = Comparer
+        private readonly Infra.Comparer<HashSet<HashSet<char>>> _setOfSetComparer = Comparer
             .GetIEqualityComparer((HashSet<HashSet<char>> x, HashSet<HashSet<char>> y) =>
             {
                 if (x.Count != y.Count) return false;
@@ -30,61 +31,6 @@ namespace Topology.Infra.Test
             });
 
         #endregion
-
-        [Fact]
-        public void Can_Generate_PowerSet()
-        {
-            // Arrange
-            var set = new HashSet<char> {'a', 'b', 'c', 'd'};
-            var expected = new HashSet<HashSet<char>>
-            {
-                new HashSet<char>(),
-                new HashSet<char> {'a'},                // 0001
-                new HashSet<char> {'b'},                // 0010
-                new HashSet<char> {'a', 'b'},           // 0011
-                new HashSet<char> {'c'},                // 0100 
-                new HashSet<char> {'a', 'c'},           // 0101
-                new HashSet<char> {'b', 'c'},           // 0110
-                new HashSet<char> {'a', 'b', 'c'},      // 0111
-                new HashSet<char> {'d'},                // 1000
-                new HashSet<char> {'d', 'a'},           // 1001
-                new HashSet<char> {'d', 'b'},           // 1010
-                new HashSet<char> {'d', 'a', 'b'},      // 1011
-                new HashSet<char> {'d', 'c'},           // 1100
-                new HashSet<char> {'d', 'a', 'c'},      // 1101
-                new HashSet<char> {'d', 'b', 'c'},      // 1110
-                new HashSet<char> {'a', 'b', 'c', 'd'}, // 1111
-            };
-            // Act
-            var result = TopologyUtl.PowerSet(set);
-
-            // Assert
-            Assert.Equal(expected, result, _setComparer);
-            Assert.Equal(16, result.Count);
-        }
-
-        [Fact]
-        public void Can_Generate_ClosedSet()
-        {
-            // Arrange
-            var set = new HashSet<char> {'a', 'b', 'c', 'd'};
-            var subset1 = new HashSet<char> {'b', 'a', 'd'};
-            var expected1 = new HashSet<char> {'c'};
-
-            var subset2 = new HashSet<char>();
-
-            // Act
-            var result1 = TopologyUtl.ClosedSet(set, subset1);
-            var result2 = TopologyUtl.ClosedSet(set, subset2);
-            var result3 = TopologyUtl.ClosedSet(set, set);
-
-            // Assert
-            Assert.Equal(expected1, result1, _setComparer);
-            // Assert - can generate the closure for empty set
-            Assert.Equal(set, result2, _setComparer);
-            // Assert - can generate the closure for the set itself.
-            Assert.Equal(subset2, result3, _setComparer);
-        }
 
         [Fact]
         public void Can_Determine_Valid_Topology()
@@ -124,6 +70,35 @@ namespace Topology.Infra.Test
 
             // Assert
             Assert.False(result);
+        }
+
+        [Fact]
+        public void Can_Find_NeighbourhoodSystem()
+        {
+            // Arrange
+            var set = new HashSet<char>{'a', 'b', 'c', 'd', 'e'};
+            var t = new HashSet<HashSet<char>>
+            {
+                new HashSet<char>(),
+                new HashSet<char>{'a'},
+                new HashSet<char>{'a', 'b'},
+                new HashSet<char>{'a', 'c', 'd'},
+                new HashSet<char>{'a', 'b', 'c', 'd'},
+                new HashSet<char>{'a', 'b', 'c', 'd', 'e'},
+            };
+
+            // Act
+            var result = TopologyUtl.NeighbourhoodSystem(set, t, 'c');
+
+            // Assert
+            Assert.Equal(new HashSet<HashSet<char>>
+            {
+                new HashSet<char>{'a', 'c', 'd'},
+                new HashSet<char>{'a', 'b', 'c', 'd'},
+                new HashSet<char>{'a', 'c', 'd', 'e'},
+                new HashSet<char>{'a', 'b', 'c', 'd', 'e'},
+            }, result, _setComparer);
+
         }
 
         [Fact]
@@ -478,35 +453,6 @@ namespace Topology.Infra.Test
 
             // Assert
             Assert.Equal(expected, result, _setComparer);
-        }
-
-        [Fact]
-        public void Can_Find_NeighbourhoodSystem()
-        {
-            // Arrange
-            var set = new HashSet<char>{'a', 'b', 'c', 'd', 'e'};
-            var t = new HashSet<HashSet<char>>
-            {
-                new HashSet<char>(),
-                new HashSet<char>{'a'},
-                new HashSet<char>{'a', 'b'},
-                new HashSet<char>{'a', 'c', 'd'},
-                new HashSet<char>{'a', 'b', 'c', 'd'},
-                new HashSet<char>{'a', 'b', 'c', 'd', 'e'},
-            };
-
-            // Act
-            var result = TopologyUtl.NeighbourhoodSystem(set, t, 'c');
-
-            // Assert
-            Assert.Equal(new HashSet<HashSet<char>>
-            {
-                new HashSet<char>{'a', 'c', 'd'},
-                new HashSet<char>{'a', 'b', 'c', 'd'},
-                new HashSet<char>{'a', 'c', 'd', 'e'},
-                new HashSet<char>{'a', 'b', 'c', 'd', 'e'},
-            }, result, _setComparer);
-
         }
     }
 }

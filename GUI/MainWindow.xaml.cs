@@ -10,13 +10,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using Infra;
+using Infra.Models;
 using Microsoft.Win32;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
-using static Topology.Infra.ParseUtl;
-using static Topology.Infra.TopologyUtl;
+using static Infra.ParseUtl;
+using static Infra.TopologyUtl;
 
-namespace Topology.GUI
+namespace GUI
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -133,7 +135,7 @@ namespace Topology.GUI
 
             await Task.Run(() =>
             {
-                var powerSet = PowerSet(set);
+                var powerSet = SetUtl.PowerSet(set);
 
                 // remove the set and the empty set. for example, for set of 4 element this
                 // make the complexity decrease from 2^(2^4)= 65,536 to 2^(2^4-2)= 16,384
@@ -173,7 +175,7 @@ namespace Topology.GUI
                         _topologies.Add(s);
                         this.Dispatcher?.Invoke(delegate
                             {
-                                TopologiesDataGrid.Items.Add(new TopologyItemData
+                                TopologiesDataGrid.Items.Add(new TopologyModel
                                     {Index = ++counter, Topology = s});
                             }
                         );
@@ -336,14 +338,14 @@ namespace Topology.GUI
             var set = StringToSet(setBox);
             var t = StringToSetOfSets(tBox);
 
-            var powerSet = PowerSet(set);
+            var powerSet = SetUtl.PowerSet(set);
 
             try
             {
                 var i = 0;
                 foreach (var subset in powerSet)
                 {
-                    SubsetPointsDataGrid.Items.Add(new SubsetPointsItemData
+                    SubsetPointsDataGrid.Items.Add(new 
                     {
                         Index = ++i,
                         Subset = SetToString(subset),
@@ -460,7 +462,7 @@ namespace Topology.GUI
             try
             {
                 foreach (var s in NeighbourhoodSystem(set, topology, point))
-                    NeighbourhoodDataGrid.Items.Add(new NeighbourhoodItemData 
+                    NeighbourhoodDataGrid.Items.Add(new NeighbourhoodModel 
                         {Index = ++counter, Neighbourhood = SetToString(s)});
             }
             catch (Exception exception)
@@ -490,7 +492,7 @@ namespace Topology.GUI
 
             try
             {
-                foreach (var subset in PowerSet(set))
+                foreach (var subset in SetUtl.PowerSet(set))
                     PowerSetDataGrid.Items.Add(new {Index = ++counter, Subset = SetToString(subset)});
             }
             catch (Exception exception)
@@ -585,27 +587,5 @@ namespace Topology.GUI
         #endregion
     }
 
-    internal class TopologyItemData
-    {
-        public int Index { get; set; }
-        public string Topology { get; set; }
-    }
 
-    internal class NeighbourhoodItemData
-    {
-        public int Index { get; set; }
-        public string Neighbourhood { get; set; }
-    }
-
-    internal class SubsetPointsItemData
-    {
-        public int Index { get; set; }
-        public string Subset { get; set; }
-        public string Limit { get; set; }
-        public string Closure { get; set; }
-        public string Interior { get; set; }
-        public string Exterior { get; set; }
-        public string Boundary { get; set; }
-        public double Accuracy { get; set; }
-    }
 }

@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using static Topology.Infra.TopologyUtl;
-using static Topology.Infra.ParseUtl;
+using static Infra.TopologyUtl;
+using static Infra.ParseUtl;
+using static Infra.SetUtl;
 
-namespace Topology.CLI
+namespace CLI
 {
     public class Program
     {

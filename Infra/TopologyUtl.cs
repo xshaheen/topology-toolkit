@@ -1,70 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Topology.Infra.Infrastructure;
+using Infra.Infra;
 
-namespace Topology.Infra
+namespace Infra
 {
     /// <summary>
     /// Provides a set of static methods that related to topology.
     /// </summary>
     public class TopologyUtl
     {
-        /// <summary>
-        /// Generates the power set of the given set in O(2^set.length).
-        /// </summary>
-        /// Examples:
-        /// - Input: S = {a, b}, Output: {}, {a}, {b}, S
-        ///   Note the pattern:          00   01   10  11
-        /// - Input: S = {a, b, c}, Output: {}, {a}, {b}, {a, b} {c}, {c, a}, {b, c}, S
-        ///   Note the pattern:             000 001  010  011    100  101      110    111 
-        /// - Input: S = {a, b, c, d}, Output: {}, {a} , {b}, {c}, {d}, {a,b}, {a,c}, {a,d},
-        ///   {b,c}, {b,d}, {c,d}, {a,b,c}, {a,b,d}, {a,c,d}, {b,c,d}, S
-        /// <typeparam name="T">The type of set elements.</typeparam>
-        /// <param name="set">The target set.</param>
-        /// <returns>The power set of the set.</returns>
-        public static HashSet<HashSet<T>> PowerSet<T>(HashSet<T> set)
-        {
-            if (set == null) throw new ArgumentNullException(nameof(set));
-            if (set.Count > 32) throw new Exception("Max set elements is 32 element");
-
-            var n = 1 << set.Count;
-            var powerSet = new HashSet<HashSet<T>>(n);
-
-            // loop to get all 2^set.Count subset
-            for (var i = 0; i < n; i++)
-            {
-                var subset = new HashSet<T>();
-
-                // loop though every element in the set and determine with number 
-                // should present in the current subset.
-                var j = 0;
-                foreach (var e in set)
-                    // if the jth element (bit) in the ith subset (binary number of i) add it.
-                    if (((1L << j++) & i) > 0)
-                        subset.Add(e);
-
-                powerSet.Add(subset);
-            }
-
-            return powerSet;
-        }
-
-        /// <summary>
-        /// Find the closure of a <paramref name="subset"/>.
-        /// </summary>
-        /// <typeparam name="T">Type of <paramref name="set"/> elements.</typeparam>
-        public static HashSet<T> ClosedSet<T>(HashSet<T> set, HashSet<T> subset)
-        {
-            if (set == null) throw new ArgumentNullException(nameof(set));
-            if (subset == null) throw new ArgumentNullException(nameof(subset));
-            if (!subset.IsSubsetOf(set)) 
-                throw new Exception("The given subset not a valid subset of the set.");
-
-            return set.Where(e => !subset.Contains(e)).ToHashSet();
-        }
-
         /// <summary>
         /// Determine if the <paramref name="t"/> is a topology of the <paramref name="set"/> in O(t.Count^2).
         /// </summary>
@@ -168,7 +113,7 @@ namespace Topology.Infra
             // if > 6 will case overflow in the long type.
             if (set.Count > 5) throw new Exception("Set elements must be less than 6 elements.");
 
-            var powerSet = PowerSet(set);
+            var powerSet = SetUtl.PowerSet(set);
 
             // remove the set and the empty set. for example, for set of 4 element this
             // make the complexity decrease from 2^(2^4)= 65,536 to 2^(2^4-2)= 16,384
@@ -193,6 +138,43 @@ namespace Topology.Infra
                 subset.Add(set);
                 if (IsTopology(subset, set)) yield return subset;
             }
+        }
+
+        /// <summary>
+        /// Find the neighbourhood for point in the <paramref name="set"/> for a given topology.
+        /// </summary>
+        /// Definition: Neighbourhood of a point:
+        ///   If X is a topological space and p ∈ X, a neighbourhood of p is a subset N of X
+        ///   that includes an open set O containing p, p∈O⊆N.
+        /// Definition: The collection of all neighbourhoods of a point is called the
+        ///   neighbourhood system at the point.
+        public static HashSet<HashSet<T>> NeighbourhoodSystem<T>(HashSet<T> set, HashSet<HashSet<T>> topology, T point)
+        {
+            if (!IsTopology(topology, set)) 
+                throw new Exception("The given topology is not a valid topology on the set.");
+
+            if (!set.Contains(point)) 
+                throw new Exception("The set do not contain the point!");
+            
+            var powerSet = SetUtl.PowerSet(set);
+
+            // The open sets that contain the point
+            var enumerable = topology.Where(s => s.Contains(point));
+            var openSets = enumerable as HashSet<T>[] ?? enumerable.ToArray();
+
+            // The smallest open set that contain the point
+            // Assume that the first element
+            var o = openSets.First();
+
+            foreach (var openSet in openSets)
+                o.IntersectWith(openSet);
+
+            var neighbourhood = new HashSet<HashSet<T>>();
+
+            foreach (var s in powerSet.Where(s => o.IsSubsetOf(s)))
+                neighbourhood.Add(s);
+
+            return neighbourhood;
         }
 
         /// <summary>
@@ -265,7 +247,7 @@ namespace Topology.Infra
 
             // Generate all closed set for every element in t
             var allClosedSets = new HashSet<HashSet<T>>(t.Count);
-            foreach (var e in t) allClosedSets.Add(ClosedSet(set, e));
+            foreach (var e in t) allClosedSets.Add(SetUtl.ClosedSet(set, e));
 
             // Get the closed set that containing the subset.
             var closedSets = allClosedSets.Where(subset.IsSubsetOf).ToArray();
@@ -335,42 +317,5 @@ namespace Topology.Infra
         /// </summary>
         public static double Accuracy<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t) 
             => (double) InteriorPoints(set, subset, t).Count / ClosurePoints(set, subset, t).Count;
-
-        /// <summary>
-        /// Find the neighbourhood for point in the <paramref name="set"/> for a given topology.
-        /// </summary>
-        /// Definition: Neighbourhood of a point:
-        ///   If X is a topological space and p ∈ X, a neighbourhood of p is a subset N of X
-        ///   that includes an open set O containing p, p∈O⊆N.
-        /// Definition: The collection of all neighbourhoods of a point is called the
-        ///   neighbourhood system at the point.
-        public static HashSet<HashSet<T>> NeighbourhoodSystem<T>(HashSet<T> set, HashSet<HashSet<T>> topology, T point)
-        {
-            if (!IsTopology(topology, set)) 
-                throw new Exception("The given topology is not a valid topology on the set.");
-
-            if (!set.Contains(point)) 
-                throw new Exception("The set do not contain the point!");
-            
-            var powerSet = PowerSet(set);
-
-            // The open sets that contain the point
-            var enumerable = topology.Where(s => s.Contains(point));
-            var openSets = enumerable as HashSet<T>[] ?? enumerable.ToArray();
-
-            // The smallest open set that contain the point
-            // Assume that the first element
-            var o = openSets.First();
-
-            foreach (var openSet in openSets)
-                o.IntersectWith(openSet);
-
-            var neighbourhood = new HashSet<HashSet<T>>();
-
-            foreach (var s in powerSet.Where(s => o.IsSubsetOf(s)))
-                neighbourhood.Add(s);
-
-            return neighbourhood;
-        }
     }
 }
