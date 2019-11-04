@@ -256,7 +256,7 @@
                             Orientation="Horizontal">
 
                             <ProgressBar
-                                Name="TopologyTabProcessBar"
+                                x:Name="TopologyTabProcessBar"
                                 Width="200"
                                 Height="25"
                                 Margin="10,0,20,0"
@@ -944,7 +944,7 @@
                                 Header="N" />
                             <DataGridTextColumn
                                 Width="*"
-                                Binding="{Binding Path=Subset}"
+                                Binding="{Binding Path=Set}"
                                 CanUserSort="False"
                                 Header="Subset" />
                         </DataGrid.Columns>

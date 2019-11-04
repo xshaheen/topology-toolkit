@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Infra.Infra;
 
 namespace Infra
@@ -104,14 +105,14 @@ namespace Infra
         /// - Theorem:
         ///   The number of subsets of all size is 2^n
         /// <typeparam name="T">Set elements type.</typeparam>
-        /// <param name="set">The set that a topologies dif</param>
+        /// <param name="set">The set that a topologies define.</param>
         /// <returns>Set of all topologies that defined on <paramref name="set"/>.</returns>
         public static IEnumerable<HashSet<HashSet<T>>> Topologies<T>(HashSet<T> set)
         {
             if (set == null) throw new ArgumentNullException(nameof(set));
-
             // if > 6 will case overflow in the long type.
-            if (set.Count > 5) throw new Exception("Set elements must be less than 6 elements.");
+            if (set.Count > 5) 
+                throw new Exception("Set elements must be less than 6 elements.");
 
             var powerSet = SetUtl.PowerSet(set);
 
@@ -138,6 +139,56 @@ namespace Infra
                 subset.Add(set);
                 if (IsTopology(subset, set)) yield return subset;
             }
+        }
+
+        /// <summary>
+        /// Generates all topologies defined on a given set (where set.Count &lt; 6) in O(2^(2^set.Count -2)).
+        /// </summary>
+        /// <returns>Set of all topologies that defined on <paramref name="set"/>.</returns>
+        public static IEnumerable<HashSet<HashSet<T>>> Topologies<T>(
+            HashSet<T> set, IProgress<double> progress, CancellationToken ct)
+        {
+            if (set == null) throw new ArgumentNullException(nameof(set));
+            // if > 6 will case overflow in the long type.
+            if (set.Count > 5) throw 
+                new Exception("Set elements must be less than 6 elements.");
+
+            progress.Report(0);
+
+            var powerSet = SetUtl.PowerSet(set);
+
+            // remove the set and the empty set.
+            powerSet.RemoveWhere(s => s.Count == 0);         // O(2^set.Count)
+            powerSet.RemoveWhere(s => s.Count == set.Count); // O(2^set.Count)
+
+            var n = 1L << powerSet.Count;
+            // loop to get all n subsets
+            for (long i = 0; i < n; i++)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                if (i % 100 == 0)
+                {
+                    var x = i / (decimal)n;
+                    var p = 100 * x;
+                    progress.Report((double)p);
+                }
+
+                var subset = new HashSet<HashSet<T>>();
+
+                // loop though every element in the set and determine with number 
+                // should present in the current subset.
+                var j = 0;
+                foreach (var e in powerSet)
+                    // if the jth element (bit) in the ith subset (binary number of i) add it.
+                    if (((1L << j++) & i) > 0)
+                        subset.Add(e);
+
+                subset.Add(new HashSet<T>());
+                subset.Add(set);
+                if (IsTopology(subset, set)) yield return subset;
+            }
+            progress.Report(0);
         }
 
         /// <summary>

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Text;
+using System.Threading;
 using OfficeOpenXml;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Text;
 using OfficeOpenXml.Style;
 
 namespace Infra
@@ -104,15 +106,17 @@ namespace Infra
             return hashSet;
         }
 
-        public void ExportTopologiesToExcel<T>(HashSet<HashSet<T>> topologies, string path)
+        public static void ExportTopologiesToExcel(
+            HashSet<string> topologies,
+            string path)
         {
             if (path == null) throw new ArgumentNullException(nameof(path));
             if (topologies == null) throw new ArgumentNullException(nameof(topologies));
 
-            //Creates a blank workbook.
+            // creates a blank workbook.
             using var p = new ExcelPackage();
 
-            //A workbook must have at least on cell, so lets add one... 
+            // a workbook must have at least on cell, so lets add one... 
             var sheet = p.Workbook.Worksheets.Add("Exported Topologies Sheet");
 
             // fill Header
@@ -121,12 +125,8 @@ namespace Infra
 
             // fill table rows.
             var x = 2;
-            // var n = topologies.Count;
             foreach (var topology in topologies)
             {
-                // ct.ThrowIfCancellationRequested();
-                // progress.Report((double) (x - 1) / n * 100);
-
                 sheet.Cells[x, 1].Value = x - 1;
                 sheet.Cells[x, 2].Value = topology;
                 x++;
@@ -142,10 +142,64 @@ namespace Infra
             range.Style.Fill.BackgroundColor.SetColor(Color.RoyalBlue);
             range.Style.Font.Color.SetColor(Color.White);
 
-            // using var range2 = sheet.Cells[1, 1];
-
             //Save the new workbook.
             p.SaveAs(new FileInfo(path));
         }
+
+        public static void ExportTopologiesToExcel(
+            HashSet<string> topologies,
+            string path,
+            CancellationToken ct,
+            IProgress<double> progress)
+        {
+            if (path == null) throw new ArgumentNullException(nameof(path));
+            if (topologies == null) throw new ArgumentNullException(nameof(topologies));
+
+            try
+            {
+                progress.Report(0);
+
+                // creates a blank workbook.
+                using var p = new ExcelPackage();
+
+                // a workbook must have at least on cell, so lets add one... 
+                var sheet = p.Workbook.Worksheets.Add("Exported Topologies Sheet");
+
+                // fill Header
+                sheet.Cells[1, 1].Value = "N";
+                sheet.Cells[1, 2].Value = "Topologies";
+
+                // fill table rows.
+                var x = 2;
+                var n = topologies.Count;
+                foreach (var topology in topologies)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    progress.Report((double)(x - 1) / n * 100);
+
+                    sheet.Cells[x, 1].Value = x - 1;
+                    sheet.Cells[x, 2].Value = topology;
+                    x++;
+                }
+
+                // style header
+                sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
+
+                using var range = sheet.Cells[1, 1, 1, 2];
+                range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                range.Style.Font.Bold = true;
+                range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                range.Style.Fill.BackgroundColor.SetColor(Color.RoyalBlue);
+                range.Style.Font.Color.SetColor(Color.White);
+
+                //Save the new workbook.
+                p.SaveAs(new FileInfo(path));
+            }
+            finally
+            {
+                progress.Report(0);
+            }
+        }
+
     }
 }

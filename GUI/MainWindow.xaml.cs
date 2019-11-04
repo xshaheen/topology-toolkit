@@ -1,4 +1,9 @@
-﻿using System;
+﻿using Infra;
+using Infra.Models;
+using Microsoft.Win32;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -10,12 +15,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using Infra;
-using Infra.Models;
-using Microsoft.Win32;
-using OfficeOpenXml;
-using OfficeOpenXml.Style;
 using static Infra.ParseUtl;
+using static Infra.SetUtl;
 using static Infra.TopologyUtl;
 
 namespace GUI
@@ -28,8 +29,8 @@ namespace GUI
         private readonly HashSet<string> _topologies;
 
         private CancellationTokenSource _cancelToken;
-        
-        private Progress<double> _progressOperation;
+
+        private Progress<double> _progress;
 
         public MainWindow()
         {
@@ -67,46 +68,48 @@ namespace GUI
                 return;
             }
 
-            _cancelToken = new CancellationTokenSource();
             GenerateTopologiesBtn.IsEnabled = false;
             SaveToExcelBtn.IsEnabled = false;
             TopologyTabCancelBtn.IsEnabled = true;
 
-            _progressOperation = new Progress<double>(value => TopologyTabProcessBar.Value = value);
-
-            TopologyTabProcessBar.Visibility = Visibility.Visible;
-
             TopologiesDataGrid.Items.Clear();
-
             TopologyTabStatusTxt.Text = "Generating...";
+
+            _cancelToken = new CancellationTokenSource();
+            _progress = new Progress<double>(
+                value => TopologyTabProcessBar.Value = value);
+            TopologyTabProcessBar.Visibility = Visibility.Visible;
 
             try
             {
                 if (sort)
-                {  
+                {
                     var topologies = Topologies(set).ToList();
                     topologies.Sort(CompareSetByLength);
 
                     _topologies.Clear();
 
                     var n = topologies.Count;
+
                     for (var i = 0; i < n;)
                     {
                         var topology = SetToString(topologies[i]);
                         _topologies.Add(topology);
-                        TopologiesDataGrid.Items.Add(new {Index = ++i, Topology = topology});
+                        TopologiesDataGrid.Items.Add(new TopologyModel
+                            { Index = ++i, Topology = topology });
                     }
                 }
                 else
                 {
-                    await TopologiesToDataGridAsync(set, _cancelToken.Token, _progressOperation);
+                    await Task.Run(() => TopologiesToDataGrid(
+                        set, _cancelToken.Token, _progress));
                 }
 
-                TopologyTabStatusTxt.Text ="Operation Completed.";
+                TopologyTabStatusTxt.Text = "Operation Completed.";
             }
             catch (OperationCanceledException ex)
             {
-                TopologyTabStatusTxt.Text ="Operation Cancelled | " + ex.Message;
+                TopologyTabStatusTxt.Text = "Operation Cancelled | " + ex.Message;
             }
             catch (Exception ex)
             {
@@ -122,95 +125,37 @@ namespace GUI
             }
         }
 
-        private async Task TopologiesToDataGridAsync(HashSet<string> set, CancellationToken ct,
-            IProgress<double> progress)
-        {
-            // if > 6 will case overflow in the long type.
-            if (set.Count > 5) 
-                throw new Exception("Set elements must be less than 6 elements.");
-
-            progress.Report(0);
-
-            _topologies.Clear();
-
-            await Task.Run(() =>
-            {
-                var powerSet = SetUtl.PowerSet(set);
-
-                // remove the set and the empty set. for example, for set of 4 element this
-                // make the complexity decrease from 2^(2^4)= 65,536 to 2^(2^4-2)= 16,384
-                powerSet.RemoveWhere(s => s.Count == 0);         // O(2^set.Count)
-                powerSet.RemoveWhere(s => s.Count == set.Count); // O(2^set.Count)
-
-                var counter = 0;
-                var n = 1L << powerSet.Count;
-                // loop to get all n subsets
-                for (long i = 0; i < n; i++)
-                {
-                    ct.ThrowIfCancellationRequested();
-
-                    if (i % 100 == 0)
-                    {
-                        var x = i / (decimal) n;
-                        var p = 100 * x;
-                        progress.Report((double)p);
-                    }
-
-                    var subset = new HashSet<HashSet<string>>();
-
-                    // loop though every element in the set and determine with number 
-                    // should present in the current subset.
-                    var j = 0;
-                    foreach (var e in powerSet)
-                        // if the jth element (bit) in the ith subset (binary number of i) add it.
-                        if (((1L << j++) & i) > 0)
-                            subset.Add(e);
-
-                    subset.Add(new HashSet<string>());
-                    subset.Add(set);
-
-                    if (IsTopology(subset, set))
-                    {
-                        var s = SetToString(subset);
-                        _topologies.Add(s);
-                        this.Dispatcher?.Invoke(delegate
-                            {
-                                TopologiesDataGrid.Items.Add(new TopologyModel
-                                    {Index = ++counter, Topology = s});
-                            }
-                        );
-                    }
-                }
-            }, ct);
-
-            progress.Report(0);
-        }
-
-        #region To Excel
-
         private async void SaveToExcelBtn_Click(object sender, RoutedEventArgs e)
         {
-
-            _cancelToken = new CancellationTokenSource();
-
             GenerateTopologiesBtn.IsEnabled = false;
             SaveToExcelBtn.IsEnabled = false;
             TopologyTabCancelBtn.IsEnabled = true;
 
-            _progressOperation = new Progress<double>(value => TopologyTabProcessBar.Value = value);
+            // Get path
+            var sfd = new SaveFileDialog
+            {
+                Filter = "Excel Documents (*.xlsx)|*.xlsx",
+                FileName = "Topologies.xlsx"
+            };
+        
+            if (sfd.ShowDialog() != true) return;
 
+            _cancelToken = new CancellationTokenSource();
+            _progress = new Progress<double>(
+                value => TopologyTabProcessBar.Value = value);
             TopologyTabProcessBar.Visibility = Visibility.Visible;
-
             TopologyTabStatusTxt.Text = "Exporting...";
 
             try
             {
-                await Task.Run(() => ExportTopologiesDataGridToExcel(_cancelToken.Token, _progressOperation));
-                TopologyTabStatusTxt.Text ="Operation Completed.";
+                await Task.Run(() => ExportTopologiesToExcel(
+                    _topologies, sfd.FileName, _cancelToken.Token, _progress));
+                
+                TopologyTabStatusTxt.Text = "Operation Completed.";
             }
             catch (OperationCanceledException ex)
             {
-                TopologyTabStatusTxt.Text ="Operation Cancelled | " + ex.Message;
+                TopologyTabStatusTxt.Text = "Operation Cancelled | " + ex.Message;
             }
             catch (Exception ex)
             {
@@ -226,70 +171,31 @@ namespace GUI
             }
         }
 
-        public void ExportTopologiesDataGridToExcel(CancellationToken ct, IProgress<double> progress)
+        private void CancelBtn_OnClick(object sender, RoutedEventArgs e)
         {
-            try
+            _cancelToken.Cancel();
+        }
+
+        #region HelperMethods
+
+        private void TopologiesToDataGrid(
+            HashSet<string> set,
+            CancellationToken ct,
+            IProgress<double> progress)
+        {
+            _topologies.Clear();
+            var counter = 0;
+
+            foreach (var t in Topologies(set, progress, ct))
             {
-                progress.Report(0);
-
-                var sfd = new SaveFileDialog
-                {
-                    Filter = "Excel Documents (*.xlsx)|*.xlsx",
-                    FileName = "Topologies.xlsx"
-                };
-
-                if (sfd.ShowDialog() != true) return;
-
-
-                //Creates a blank workbook.
-                using var p = new ExcelPackage();
-
-                //A workbook must have at least on cell, so lets add one... 
-                var sheet = p.Workbook.Worksheets.Add("Exported Topologies Sheet");
-
-                // fill Header
-                sheet.Cells[1, 1].Value = "N";
-                sheet.Cells[1, 2].Value = "Topologies";
-
-                // fill table rows.
-                var x = 2;
-                var n = _topologies.Count;
-                foreach (var topology in _topologies)
-                {
-                    ct.ThrowIfCancellationRequested();
-                    progress.Report((double) (x - 1) / n * 100);
-
-                    sheet.Cells[x, 1].Value = x - 1;
-                    sheet.Cells[x, 2].Value = topology;
-                    x++;
-                }
-
-                // style header
-                sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
-
-                using var range = sheet.Cells[1, 1, 1, 2];
-                range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                range.Style.Font.Bold = true;
-                range.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                range.Style.Fill.BackgroundColor.SetColor(Color.RoyalBlue);
-                range.Style.Font.Color.SetColor(Color.White);
-
-                // using var range2 = sheet.Cells[1, 1];
-                
-                //Save the new workbook.
-                p.SaveAs(new FileInfo(sfd.FileName));
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show($"Error: {e.Message} | {e.Source}", "Error!");
-            }
-            finally
-            {
-                progress.Report(0);
+                var s = SetToString(t);
+                _topologies.Add(s);
+                this.Dispatcher?.Invoke(delegate
+                    {
+                        TopologiesDataGrid.Items.Add(new TopologyModel
+                            { Index = ++counter, Topology = s });
+                    }
+                );
             }
         }
 
@@ -308,11 +214,6 @@ namespace GUI
 
         #endregion
 
-        private void CancelBtn_OnClick(object sender, RoutedEventArgs e)
-        {
-            _cancelToken.Cancel();
-        }
-
         #endregion
 
         #region SubsetsPoints
@@ -322,14 +223,14 @@ namespace GUI
             SubsetPointsDataGrid.Items.Clear();
 
             var setBox = SubsetPointsTabSetTextBox.Text;
-            if (setBox.Length == 0)
+            if (string.IsNullOrEmpty(setBox))
             {
                 MessageBox.Show("Please fill the set field.", "Required Field!");
                 return;
             }
 
             var tBox = SubsetPointsTabTopologyTextBox.Text;
-            if (tBox.Length == 0)
+            if (string.IsNullOrEmpty(tBox))
             {
                 MessageBox.Show("Please fill the topology field.", "Required Field!");
                 return;
@@ -338,14 +239,14 @@ namespace GUI
             var set = StringToSet(setBox);
             var t = StringToSetOfSets(tBox);
 
-            var powerSet = SetUtl.PowerSet(set);
+            var powerSet = PowerSet(set);
 
             try
             {
                 var i = 0;
                 foreach (var subset in powerSet)
                 {
-                    SubsetPointsDataGrid.Items.Add(new 
+                    SubsetPointsDataGrid.Items.Add(new SubsetPointsCategories
                     {
                         Index = ++i,
                         Subset = SetToString(subset),
@@ -372,21 +273,21 @@ namespace GUI
         {
 
             var setBox = PointsTabSetTextBox.Text;
-            if (setBox.Length == 0)
+            if (string.IsNullOrEmpty(setBox))
             {
                 MessageBox.Show("Please fill the set field.", "Required Field!");
                 return;
             }
 
             var subsetBox = PointsTabSubsetTextBox.Text;
-            if (subsetBox.Length == 0)
+            if (string.IsNullOrEmpty(subsetBox))
             {
                 MessageBox.Show("Please fill the subset field.", "Required Field!");
                 return;
             }
 
             var tBox = PointsTabTopologyTextBox.Text;
-            if (tBox.Length == 0)
+            if (string.IsNullOrEmpty(tBox))
             {
                 MessageBox.Show("Please fill the topology field.", "Required Field!");
                 return;
@@ -398,7 +299,7 @@ namespace GUI
 
             var func = PointsTabPointsComboBox.Text;
 
-            if (func.Length == 0)
+            if (string.IsNullOrEmpty(func))
             {
                 MessageBox.Show("Please, select the points set.", "Required Field!");
                 return;
@@ -432,43 +333,39 @@ namespace GUI
         private void GenerateNeighbourhoodBtn_Click(object sender, RoutedEventArgs e)
         {
             var setBox = NeighbourhoodTabSetTextBox.Text;
-            if (setBox.Length == 0)
+            if (string.IsNullOrEmpty(setBox))
             {
                 MessageBox.Show("Please fill the set field.", "Required Field!");
                 return;
             }
 
             var pointBox = NeighbourhoodTabPointTextBox.Text;
-            if (pointBox.Length == 0)
+            if (string.IsNullOrEmpty(pointBox))
             {
                 MessageBox.Show("Please fill the point field.", "Required Field!");
                 return;
             }
 
             var topologyBox = NeighbourhoodTabTopologyTextBox.Text;
-            if (topologyBox.Length == 0)
+            if (string.IsNullOrEmpty(topologyBox))
             {
                 MessageBox.Show("Please fill the topology field.", "Required Field!");
                 return;
             }
-
-            var set = StringToSet(setBox);
-            var point = pointBox;
-            var topology = StringToSetOfSets(topologyBox);
 
             NeighbourhoodDataGrid.Items.Clear();
             var counter = 0;
 
             try
             {
-                foreach (var s in NeighbourhoodSystem(set, topology, point))
+                foreach (var s in NeighbourhoodSystem(StringToSet(setBox),
+                    StringToSetOfSets(topologyBox), pointBox)) 
                     NeighbourhoodDataGrid.Items.Add(new NeighbourhoodModel 
-                        {Index = ++counter, Neighbourhood = SetToString(s)});
+                        { Index = ++counter, Neighbourhood = SetToString(s) });
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                MessageBox.Show($"Error: {exception.Message}", "Error!");
-                throw;
+                MessageBox.Show($"Error: {ex.Message}", "Error!");
             }
         }
 
@@ -479,26 +376,24 @@ namespace GUI
         private void GeneratePowerSetBtn_Click(object sender, RoutedEventArgs e)
         {
             var setBox = PsSetTextBox.Text;
-            if (setBox.Length == 0)
+            if (string.IsNullOrEmpty(setBox))
             {
                 MessageBox.Show("Please fill the set field.", "Required Field!");
                 return;
             }
-
-            var set = StringToSet(setBox);
 
             PowerSetDataGrid.Items.Clear();
             var counter = 0;
 
             try
             {
-                foreach (var subset in SetUtl.PowerSet(set))
-                    PowerSetDataGrid.Items.Add(new {Index = ++counter, Subset = SetToString(subset)});
+                foreach (var subset in PowerSet(StringToSet(setBox)))
+                    PowerSetDataGrid.Items.Add(new SetModel 
+                        { Index = ++counter, Set = SetToString(subset) });
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                MessageBox.Show($"Error: {exception.Message}", "Error!");
-                throw;
+                MessageBox.Show($"Error: {ex.Message}", "Error!");
             }
         }
 
@@ -508,10 +403,10 @@ namespace GUI
 
         #region Footer
 
-        private void GitHubBtn_Click(object sender, RoutedEventArgs e) 
+        private void GitHubBtn_Click(object sender, RoutedEventArgs e)
             => OpenBrowser(@"https://github.com/shaheenzx/");
 
-        private void LinkedInBtn_Click(object sender, RoutedEventArgs e) 
+        private void LinkedInBtn_Click(object sender, RoutedEventArgs e)
             => OpenBrowser(@"https://www.linkedin.com/in/shaheenzx/");
 
         #region Helper Method
@@ -555,9 +450,9 @@ namespace GUI
         {
             // See if the user really wants to shut down this window.
             const string msg = "Do you want to close without saving?";
-            var result = MessageBox.Show(msg, "Are You Sure?", 
+            var result = MessageBox.Show(msg, "Are You Sure?",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning);
-	
+
             if (result == MessageBoxResult.No)
                 // If user doesn't want to close, cancel closure.
                 e.Cancel = true;
@@ -572,15 +467,15 @@ namespace GUI
         {
             if (e.XButton1 == MouseButtonState.Pressed)
             {
-                TabsControl.SelectedItem = 
+                TabsControl.SelectedItem =
                     TabsControl.Items[(TabsControl.SelectedIndex + 1) % TabsControl.Items.Count];
             }
 
             if (e.XButton2 == MouseButtonState.Pressed)
             {
                 var totalTabs = TabsControl.Items.Count;
-                TabsControl.SelectedItem = 
-                    TabsControl.Items[(TabsControl.SelectedIndex - 1 + totalTabs ) % totalTabs];
+                TabsControl.SelectedItem =
+                    TabsControl.Items[(TabsControl.SelectedIndex - 1 + totalTabs) % totalTabs];
             }
         }
 
