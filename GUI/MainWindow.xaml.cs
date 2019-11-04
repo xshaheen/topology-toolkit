@@ -1,14 +1,10 @@
 ﻿using Infra;
-using Infra.Models;
 using Microsoft.Win32;
-using OfficeOpenXml;
-using OfficeOpenXml.Style;
+using Model.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -64,7 +60,8 @@ namespace GUI
 
             if (sort && set.Count > 4)
             {
-                MessageBox.Show("I can not sort topologies defined on a set has element > 4 it cost a lot of time!", "Error");
+                MessageBox.Show("I can not sort topologies defined on a set has element > 4 it cost a lot of time!",
+                    "Error");
                 return;
             }
 
@@ -96,7 +93,7 @@ namespace GUI
                         var topology = SetToString(topologies[i]);
                         _topologies.Add(topology);
                         TopologiesDataGrid.Items.Add(new TopologyModel
-                            { Index = ++i, Topology = topology });
+                            {Index = ++i, Topology = topology});
                     }
                 }
                 else
@@ -137,7 +134,7 @@ namespace GUI
                 Filter = "Excel Documents (*.xlsx)|*.xlsx",
                 FileName = "Topologies.xlsx"
             };
-        
+
             if (sfd.ShowDialog() != true) return;
 
             _cancelToken = new CancellationTokenSource();
@@ -150,7 +147,7 @@ namespace GUI
             {
                 await Task.Run(() => ExportTopologiesToExcel(
                     _topologies, sfd.FileName, _cancelToken.Token, _progress));
-                
+
                 TopologyTabStatusTxt.Text = "Operation Completed.";
             }
             catch (OperationCanceledException ex)
@@ -193,7 +190,7 @@ namespace GUI
                 this.Dispatcher?.Invoke(delegate
                     {
                         TopologiesDataGrid.Items.Add(new TopologyModel
-                            { Index = ++counter, Topology = s });
+                            {Index = ++counter, Topology = s});
                     }
                 );
             }
@@ -222,42 +219,37 @@ namespace GUI
         {
             SubsetPointsDataGrid.Items.Clear();
 
-            var setBox = SubsetPointsTabSetTextBox.Text;
-            if (string.IsNullOrEmpty(setBox))
-            {
-                MessageBox.Show("Please fill the set field.", "Required Field!");
-                return;
-            }
-
-            var tBox = SubsetPointsTabTopologyTextBox.Text;
-            if (string.IsNullOrEmpty(tBox))
-            {
-                MessageBox.Show("Please fill the topology field.", "Required Field!");
-                return;
-            }
-
-            var set = StringToSet(setBox);
-            var t = StringToSetOfSets(tBox);
-
-            var powerSet = PowerSet(set);
-
             try
             {
+                var set = StringToSet(SubsetPointsTabSetTextBox.Text);
+                var t = StringToSetOfSets(SubsetPointsTabTopologyTextBox.Text);
+                var powerSet = PowerSet(set);
+
                 var i = 0;
                 foreach (var subset in powerSet)
                 {
-                    SubsetPointsDataGrid.Items.Add(new SubsetPointsCategories
+                    var caterings = new SubsetCategories<string>(set, subset, t);
+
+                    SubsetPointsDataGrid.Items.Add(new SubsetCategoriesModel
                     {
                         Index = ++i,
                         Subset = SetToString(subset),
-                        Limit = SetToString(LimitPoints(set, subset, t)),
-                        Closure = SetToString(ClosurePoints(set, subset, t)),
-                        Interior = SetToString(InteriorPoints(set, subset, t)),
-                        Exterior = SetToString(ExteriorPoints(set, subset, t)),
-                        Boundary = SetToString(BoundaryPoints(set, subset, t)),
-                        Accuracy = Accuracy(set, subset, t),
+                        Limit = SetToString(caterings.LimitPoints),
+                        Closure = SetToString(caterings.ClosurePoints),
+                        Interior = SetToString(caterings.InteriorPoints),
+                        Exterior = SetToString(caterings.ExteriorPoints),
+                        Boundary = SetToString(caterings.BoundaryPoints),
+                        Accuracy = caterings.Accuracy,
                     });
                 }
+            }
+            catch (ArgumentNullException nex)
+            {
+                MessageBox.Show(
+                    messageBoxText: $"Please fill the {nex.ParamName.ToLower()} field.",
+                    caption: "Required Field!",
+                    button: MessageBoxButton.OK,
+                    icon: MessageBoxImage.Exclamation);
             }
             catch (Exception ex)
             {
@@ -271,7 +263,6 @@ namespace GUI
 
         private void FindPointsBtn_Click(object sender, RoutedEventArgs e)
         {
-
             var setBox = PointsTabSetTextBox.Text;
             if (string.IsNullOrEmpty(setBox))
             {
@@ -307,13 +298,15 @@ namespace GUI
 
             try
             {
+                var caterings = new SubsetCategories<string>(set, subset, t);
+
                 var result = func switch
                 {
-                    "Limit Points" => LimitPoints(set, subset, t),
-                    "Closure Points" => ClosurePoints(set, subset, t),
-                    "Interior Points" => InteriorPoints(set, subset, t),
-                    "Exterior Points" => ExteriorPoints(set, subset, t),
-                    "Boundary Points" => BoundaryPoints(set, subset, t),
+                    "Limit Points" => caterings.LimitPoints,
+                    "Closure Points" => caterings.ClosurePoints,
+                    "Interior Points" => caterings.InteriorPoints,
+                    "Exterior Points" => caterings.ExteriorPoints,
+                    "Boundary Points" => caterings.BoundaryPoints,
                     _ => null
                 };
 
@@ -323,7 +316,6 @@ namespace GUI
             {
                 MessageBox.Show($"Error: {ex.Message}", "Error!");
             }
-
         }
 
         #endregion
@@ -359,9 +351,9 @@ namespace GUI
             try
             {
                 foreach (var s in NeighbourhoodSystem(StringToSet(setBox),
-                    StringToSetOfSets(topologyBox), pointBox)) 
-                    NeighbourhoodDataGrid.Items.Add(new NeighbourhoodModel 
-                        { Index = ++counter, Neighbourhood = SetToString(s) });
+                    StringToSetOfSets(topologyBox), pointBox))
+                    NeighbourhoodDataGrid.Items.Add(new NeighbourhoodModel
+                        {Index = ++counter, Neighbourhood = SetToString(s)});
             }
             catch (Exception ex)
             {
@@ -388,8 +380,8 @@ namespace GUI
             try
             {
                 foreach (var subset in PowerSet(StringToSet(setBox)))
-                    PowerSetDataGrid.Items.Add(new SetModel 
-                        { Index = ++counter, Set = SetToString(subset) });
+                    PowerSetDataGrid.Items.Add(new SetModel
+                        {Index = ++counter, Set = SetToString(subset)});
             }
             catch (Exception ex)
             {
@@ -423,7 +415,7 @@ namespace GUI
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     url = url.Replace("&", "^&");
-                    Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
+                    Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") {CreateNoWindow = true});
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
@@ -481,6 +473,4 @@ namespace GUI
 
         #endregion
     }
-
-
 }

@@ -25,8 +25,8 @@ namespace Infra
         /// <returns>Returns true if the <paramref name="t"/> if topology on the <paramref name="set"/>, otherwise return false.</returns>
         public static bool IsTopology<T>(HashSet<HashSet<T>> t, HashSet<T> set)
         {
-            if (t == null) throw new ArgumentNullException(nameof(t));
             if (set == null) throw new ArgumentNullException(nameof(set));
+            if (t == null) throw new ArgumentNullException(nameof(t));
 
             var comparer = Comparer.GetIEqualityComparer((IEnumerable<T> x, IEnumerable<T> y)
                 => ((HashSet<T>) x).SetEquals(y));
@@ -199,10 +199,11 @@ namespace Infra
         ///   that includes an open set O containing p, p∈O⊆N.
         /// Definition: The collection of all neighbourhoods of a point is called the
         ///   neighbourhood system at the point.
-        public static HashSet<HashSet<T>> NeighbourhoodSystem<T>(HashSet<T> set, HashSet<HashSet<T>> topology, T point)
+        public static HashSet<HashSet<T>> NeighbourhoodSystem<T>(
+            HashSet<T> set, HashSet<HashSet<T>> topology, T point)
         {
-            if (!IsTopology(topology, set)) 
-                throw new Exception("The given topology is not a valid topology on the set.");
+            if (!IsTopology(topology, set)) throw new Exception(
+                    "The given topology is not a valid topology on the set.");
 
             if (!set.Contains(point)) 
                 throw new Exception("The set do not contain the point!");
@@ -227,146 +228,5 @@ namespace Infra
 
             return neighbourhood;
         }
-
-        /// <summary>
-        /// Finds limit points (aka accumulation points or cluster points) of a <paramref name="subset"/>.
-        /// </summary>
-        /// Definition: Let A be a subset of a topological space (X, t). A point p ∈ X is said to
-        /// be a limit point (or accumulation point or cluster point) of A if every open set G
-        /// containing p contains a point of A different from p.
-        /// Mathematical form: { p ∈ X: ∀G ∈ t, p ∈ G, A∩(G - p) != {} }
-        /// <typeparam name="T">Set elements type.</typeparam>
-        public static HashSet<T> LimitPoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t)
-        {
-            // Assert that the "t" is a valid topology on the "set"
-            if (!IsTopology(t, set)) 
-                throw new Exception("The given topology is not a valid topology on the set.");
-
-            if (subset == null) throw new ArgumentNullException(nameof(subset));
-            // Assert that the "subset" is a valid subset of the "set"
-            if (!subset.IsSubsetOf(set)) 
-                throw new Exception("The given subset is not a valid subset of the set.");
-            
-            var limitPoints = new HashSet<T>();
-
-            foreach (var point in set)
-            {
-                var isLimit = true;
-                foreach (var e in t.Where(g => g.Contains(point)))
-                {
-                    var except = e.Except(new[] {point}).ToArray();
-
-                    if (!except.Any())
-                    {
-                        isLimit = false;
-                        break;
-                    }
-
-                    if (subset.Intersect(except).Any()) continue;
-
-                    isLimit = false;
-                    break;
-                }
-
-                if (isLimit) limitPoints.Add(point);
-            }
-
-            return limitPoints;
-        }
-
-        /// <summary>
-        /// Find closure points of a <paramref name="subset"/>.
-        /// </summary>
-        /// Definition:
-        ///   Let (X,τ) be a topological space and A ⊆ X, then the closure of A
-        ///   is the intersection of all closed sets containing A
-        ///   i.e. the smallest closed set containing A.
-        /// Example
-        ///   Let X={a,b,c,d} with topology τ={{},{a},{b,c},{a,b,c},X} and A={b,d}.
-        ///   - Open sets are   {},  {a}  {b,c},{a,b,c},X
-        ///   - Closed sets are X,{b,c,d},{a,d},{d}    ,{}
-        ///   - Closed sets containing A are X,{b,c,d}
-        ///   - Now closure(A) = {b,c,d} ∩ X = {b,c,d}
-        /// <typeparam name="T">Type of <paramref name="set"/> elements.</typeparam>
-        public static HashSet<T> ClosurePoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t)
-        {
-            // Assert that the "t" is a valid topology on the "set"
-            if (!IsTopology(t, set)) 
-                throw new Exception("The given topology is not a valid topology on the set.");
-
-            if (subset == null) throw new ArgumentNullException(nameof(subset));
-
-            // Generate all closed set for every element in t
-            var allClosedSets = new HashSet<HashSet<T>>(t.Count);
-            foreach (var e in t) allClosedSets.Add(SetUtl.ClosedSet(set, e));
-
-            // Get the closed set that containing the subset.
-            var closedSets = allClosedSets.Where(subset.IsSubsetOf).ToArray();
-
-            var closurePoints = closedSets.First();
-
-            for (var i = 1; i < closedSets.Length; i++)
-                closurePoints.IntersectWith(closedSets[i]);
-
-            return closurePoints;
-        }
-
-        /// <summary>
-        /// Finds interior points of a <paramref name="subset"/>.
-        /// </summary>
-        /// Definition:
-        /// * Let (X,t) be the topological space and A ⊆ X, then a point p∈A is said
-        ///   to be an interior point of set A, if there exists an open set O such that p ∈ O ⊆ A
-        /// * Interior of a set: is defined to be the union of all open sets contained in A.
-        /// <typeparam name="T">Type of <paramref name="subset"/> elements.</typeparam>
-        public static HashSet<T> InteriorPoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t)
-        {
-            // Assert that the "t" is a valid topology on the "set".
-            if (!IsTopology(t, set))
-                throw new Exception("The given topology is not a valid topology on the set.");
-
-            if (subset == null) throw new ArgumentNullException(nameof(subset));
-            // Assert that the "subset" is a valid subset of the "set"
-            if (!subset.IsSubsetOf(set)) 
-                throw new Exception("The given subset is not a valid subset of the set.");
-
-            var interiors = new HashSet<T>();
-
-            foreach (var g in t.Where(e => e.IsSubsetOf(subset)))
-                interiors.UnionWith(g);
-
-            return interiors;
-        }
-
-        /// <summary>
-        /// Find exterior points of a <paramref name="subset"/>.
-        /// </summary>
-        /// Definition:
-        ///   Let (X,τ) be a topological space and A ⊆ X, then a point p ∈ X,
-        ///   is said to be an exterior point of A if there exists an open set O,
-        ///   such that p ∈ O ∈ clo(A)
-        /// Exterior of a Set: A - clo(A)
-        /// <typeparam name="T">Type of <paramref name="set"/> elements.</typeparam>
-        public static HashSet<T> ExteriorPoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t) 
-            => set.Except(ClosurePoints(set, subset, t)).ToHashSet();
-
-        /// <summary>
-        /// Find boundary points (aka frontier points) of a <paramref name="subset"/>.
-        /// </summary>
-        /// Theorems: If A is a subset of a topological space X, then boundary(A)= closure(A) − int(T)
-        /// <typeparam name="T">Type of <paramref name="set"/> elements.</typeparam>
-        public static HashSet<T> BoundaryPoints<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t)
-        {
-            var closurePoints = ClosurePoints(set, subset, t);
-            closurePoints.ExceptWith(InteriorPoints(set, subset, t));
-            return closurePoints;
-        }
-
-        /// <summary>
-        /// Calculate the Accuracy (the number of interior points divided by number of
-        /// closure points.
-        /// </summary>
-        public static double Accuracy<T>(HashSet<T> set, HashSet<T> subset, HashSet<HashSet<T>> t) 
-            => (double) InteriorPoints(set, subset, t).Count / ClosurePoints(set, subset, t).Count;
     }
 }

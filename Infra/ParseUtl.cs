@@ -5,7 +5,6 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using OfficeOpenXml;
-using OfficeOpenXml.FormulaParsing.Excel.Functions.Text;
 using OfficeOpenXml.Style;
 
 namespace Infra

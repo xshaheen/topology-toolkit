@@ -2,18 +2,12 @@
 using Infra.Infra;
 using Xunit;
 using static Infra.SetUtl;
+using static Infra.Test.Comperers;
 
 namespace Infra.Test
 {
     public class SetUtlTests
     {
-        #region Comparer
-
-        private readonly Infra.Comparer<HashSet<char>> _setComparer = Comparer.GetIEqualityComparer
-            ((HashSet<char> x, HashSet<char> y) => x.SetEquals(y));
-
-        #endregion
-
         [Fact]
         public void Can_Generate_PowerSet()
         {
@@ -42,7 +36,7 @@ namespace Infra.Test
             var result = PowerSet(set);
 
             // Assert
-            Assert.Equal(expected, result, _setComparer);
+            Assert.Equal(expected, result, SetComparer);
             Assert.Equal(16, result.Count);
         }
 
@@ -62,11 +56,11 @@ namespace Infra.Test
             var result3 = ClosedSet(set, set);
 
             // Assert
-            Assert.Equal(expected1, result1, _setComparer);
+            Assert.Equal(expected1, result1, SetComparer);
             // Assert - can generate the closure for empty set
-            Assert.Equal(set, result2, _setComparer);
+            Assert.Equal(set, result2, SetComparer);
             // Assert - can generate the closure for the set itself.
-            Assert.Equal(subset2, result3, _setComparer);
+            Assert.Equal(subset2, result3, SetComparer);
         }
     }
 }

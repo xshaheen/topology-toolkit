@@ -1,6 +1,6 @@
-﻿namespace Infra.Models
+﻿namespace Model.Models
 {
-    public class SubsetPointsCategories
+    public class SubsetCategoriesModel
     {
         public int Index { get; set; }
         public string Subset { get; set; }

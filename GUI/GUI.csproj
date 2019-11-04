@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Infra\Infra.csproj" />
+    <ProjectReference Include="..\Model\Model.csproj" />
   </ItemGroup>
 
 </Project>

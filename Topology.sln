@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GUI", "GUI\GUI.csproj", "{4
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infra", "Infra\Infra.csproj", "{4E32A992-0335-451C-B702-611D9F8DF9FC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Model", "Model\Model.csproj", "{DFB1B820-773A-4C73-A285-482924F0D55F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{4E32A992-0335-451C-B702-611D9F8DF9FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E32A992-0335-451C-B702-611D9F8DF9FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4E32A992-0335-451C-B702-611D9F8DF9FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DFB1B820-773A-4C73-A285-482924F0D55F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DFB1B820-773A-4C73-A285-482924F0D55F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DFB1B820-773A-4C73-A285-482924F0D55F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DFB1B820-773A-4C73-A285-482924F0D55F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

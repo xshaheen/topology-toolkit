@@ -22,7 +22,8 @@ namespace Infra
         public static HashSet<HashSet<T>> PowerSet<T>(HashSet<T> set)
         {
             if (set == null) throw new ArgumentNullException(nameof(set));
-            if (set.Count > 32) throw new Exception("Max set elements is 32 element");
+            if (set.Count > 32) 
+                throw new Exception("Max set elements is 32 element");
 
             var n = 1 << set.Count;
             var powerSet = new HashSet<HashSet<T>>(n);

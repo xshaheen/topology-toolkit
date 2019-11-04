@@ -1,4 +1,4 @@
-﻿namespace Infra.Models
+﻿namespace Model.Models
 {
     public class NeighbourhoodModel
     {
