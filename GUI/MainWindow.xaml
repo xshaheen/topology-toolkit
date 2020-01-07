@@ -985,7 +985,7 @@
                     FontSize="14"
                     FontWeight="Bold"
                     Foreground="#FFA2A2A2"
-                    ToolTip="https://linkedin.com/in/shaheenzx/" />
+                    ToolTip="https://linkedin.com/in/xshaheen/" />
 
                 <Button
                     Margin="10,0,5,0"
@@ -996,7 +996,7 @@
                     FontSize="14"
                     FontWeight="Bold"
                     Foreground="#FFA2A2A2"
-                    ToolTip="https://github.com/shaheenzx" />
+                    ToolTip="https://github.com/xshaheen" />
 
             </StackPanel>
 
