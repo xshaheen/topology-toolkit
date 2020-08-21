@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Infra.Infra
+namespace Core.Infra
 {
     public class Comparer
     {

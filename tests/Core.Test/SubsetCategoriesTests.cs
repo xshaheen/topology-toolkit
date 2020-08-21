@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using Xunit;
-using static Infra.Test.Comperers;
+using static Core.Test.Comperers;
 
-namespace Infra.Test
+namespace Core.Test
 {
     public class SubsetCategoriesTests
     {

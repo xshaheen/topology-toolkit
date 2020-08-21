@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
-using Infra.Infra;
 using Xunit;
-using static Infra.SetUtl;
-using static Infra.Test.Comperers;
+using static Core.SetUtl;
+using static Core.Test.Comperers;
 
-namespace Infra.Test
+namespace Core.Test
 {
     public class SetUtlTests
     {

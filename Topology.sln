@@ -3,15 +3,26 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29324.140
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CLI", "CLI\CLI.csproj", "{FCDE38F5-1EFA-4D17-8918-B82583A7B677}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CLI", "src\CLI\CLI.csproj", "{FCDE38F5-1EFA-4D17-8918-B82583A7B677}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infra.Test", "Infra.Test\Infra.Test.csproj", "{A0EAD465-138F-487A-896E-2EBFBC25912B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Test", "tests\Core.Test\Core.Test.csproj", "{A0EAD465-138F-487A-896E-2EBFBC25912B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GUI", "GUI\GUI.csproj", "{4B1B6EFC-9636-41A4-8A00-BA88614757A1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GUI", "src\GUI\GUI.csproj", "{4B1B6EFC-9636-41A4-8A00-BA88614757A1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infra", "Infra\Infra.csproj", "{4E32A992-0335-451C-B702-611D9F8DF9FC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core", "src\Core\Core.csproj", "{4E32A992-0335-451C-B702-611D9F8DF9FC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Model", "Model\Model.csproj", "{DFB1B820-773A-4C73-A285-482924F0D55F}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CF2EC30C-653B-49F4-8CA5-F30C6B9C0A41}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{E645862E-5FF1-455F-860D-DF6CC093EEA8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "solution items", "solution items", "{23627806-D492-4484-9213-BBC9FE561AAE}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		LICENSE = LICENSE
+		README.md = README.md
+		TODO.md = TODO.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,13 +46,15 @@ Global
 		{4E32A992-0335-451C-B702-611D9F8DF9FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E32A992-0335-451C-B702-611D9F8DF9FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4E32A992-0335-451C-B702-611D9F8DF9FC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DFB1B820-773A-4C73-A285-482924F0D55F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DFB1B820-773A-4C73-A285-482924F0D55F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DFB1B820-773A-4C73-A285-482924F0D55F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DFB1B820-773A-4C73-A285-482924F0D55F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FCDE38F5-1EFA-4D17-8918-B82583A7B677} = {CF2EC30C-653B-49F4-8CA5-F30C6B9C0A41}
+		{A0EAD465-138F-487A-896E-2EBFBC25912B} = {E645862E-5FF1-455F-860D-DF6CC093EEA8}
+		{4B1B6EFC-9636-41A4-8A00-BA88614757A1} = {CF2EC30C-653B-49F4-8CA5-F30C6B9C0A41}
+		{4E32A992-0335-451C-B702-611D9F8DF9FC} = {CF2EC30C-653B-49F4-8CA5-F30C6B9C0A41}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AB78047D-E40B-4E8C-BF37-5135B60FE1BC}

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Infra.Infra;
+using Core.Infra;
 
-namespace Infra
+namespace Core
 {
     /// <summary>
     /// Provides a set of static methods that related to topology.
@@ -192,13 +192,13 @@ namespace Infra
         }
 
         /// <summary>
-        /// Find the neighbourhood for point in the <paramref name="set"/> for a given topology.
+        /// Find the neighborhood for point in the <paramref name="set"/> for a given topology.
         /// </summary>
-        /// Definition: Neighbourhood of a point:
-        ///   If X is a topological space and p ∈ X, a neighbourhood of p is a subset N of X
+        /// Definition: Neighborhood of a point:
+        ///   If X is a topological space and p ∈ X, a neighborhood of p is a subset N of X
         ///   that includes an open set O containing p, p∈O⊆N.
-        /// Definition: The collection of all neighbourhoods of a point is called the
-        ///   neighbourhood system at the point.
+        /// Definition: The collection of all neighborhoods of a point is called the
+        ///   neighborhood system at the point.
         public static HashSet<HashSet<T>> NeighbourhoodSystem<T>(
             HashSet<T> set, HashSet<HashSet<T>> topology, T point)
         {

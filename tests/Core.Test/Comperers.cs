@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Infra.Infra;
+using Core.Infra;
 
-namespace Infra.Test
+namespace Core.Test
 {
     public class Comperers
     {

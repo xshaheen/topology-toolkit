@@ -1,4 +1,4 @@
-﻿namespace Model.Models
+﻿namespace Core.Models
 {
     public class SetModel
     {

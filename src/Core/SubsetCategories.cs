@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using static Infra.TopologyUtl;
-using static Infra.SetUtl;
+using static Core.TopologyUtl;
+using static Core.SetUtl;
 
-namespace Infra
+namespace Core
 {
     public class SubsetCategories<T>
     {

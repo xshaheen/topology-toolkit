@@ -7,7 +7,7 @@ using System.Threading;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 
-namespace Infra
+namespace Core
 {
     public class ParseUtl
     {

@@ -1,6 +1,4 @@
-﻿using Infra;
-using Microsoft.Win32;
-using Model.Models;
+﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -11,9 +9,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using static Infra.ParseUtl;
-using static Infra.SetUtl;
-using static Infra.TopologyUtl;
+using Core;
+using Core.Models;
+using static Core.ParseUtl;
+using static Core.SetUtl;
+using static Core.TopologyUtl;
 
 namespace GUI
 {

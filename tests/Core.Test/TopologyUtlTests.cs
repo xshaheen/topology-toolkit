@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Xunit;
-using static Infra.Test.Comperers;
+using static Core.Test.Comperers;
 
-namespace Infra.Test
+namespace Core.Test
 {
     public class TopologyUtlTests
     {
@@ -48,7 +48,7 @@ namespace Infra.Test
         }
 
         [Fact]
-        public void Can_Find_NeighbourhoodSystem()
+        public void Can_Find_NeighborhoodSystem()
         {
             // Arrange
             var set = new HashSet<char> {'a', 'b', 'c', 'd', 'e'};
